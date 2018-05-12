@@ -1,6 +1,8 @@
 function loadPage() {
-    var settings0 = new TMLSettings();
-    console.log(settings0.firstName);
-    console.log(settings0.secondName);
+    var settings = [new TMLSettings(), new TMLSettings(), new TMLSettings(), new TMLSettings()];
+    settings.forEach(v => {
+        console.log(v.firstName);
+        console.log(v.secondName);
+    });
     console.log("loadPage runned");
 }
