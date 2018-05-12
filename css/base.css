@@ -1,3 +1,8 @@
 .body_gray {
-    background: gray
+    background: whitesmoke
+}
+
+.name_style {
+    margin: 0px;
+    padding: 0px;
 }
