@@ -10,11 +10,50 @@
     <link rel="stylesheet" type="text/css" href="css/base.css">
 </head>
 
-<body onload="loadPage()" class="body_gray">
-    <div id="main_text">
-        <p class="name_style">Sergii was here.</p>
-        <p class="name_style">And he is happy.</p>
+<body onload="loadPage()" class="body-main">
+    <div class="navbar">
+        <div class="dropdown">
+            <button onclick="show_home_panel()" title="Home" class="dropbtn">Home</button>
+        </div>
+
+        <div class="dropdown">
+            <button title="Image" class="dropbtn">Image &#9662;</button>
+            <div class="dropdown-content">
+                <a onclick="sel_local_images()" title="Load (or add) a set of images from local disk">Load or Add Images</a>
+                <a onclick="show_img_list()" title="Browse currently loaded images">List Images</a>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button title="Annotations" class="dropbtn">Annotation &#9662;</button>
+            <div class="dropdown-content">
+                <a onclick="show_annotation_data()" title="View annotations">View annotations</a>
+                <a onclick="download_all_region_data('csv')" title="Save image region annotations as a CSV(comma separated value) file">Save as CSV</a>
+                <a onclick="download_all_region_data('json')" title="Save image region annotations as a JSON(Javascript Object Notation) file">Save as JSON</a>
+                <a onclick="sel_local_data_file('annotations')" title="Import existing region data from CSV or JSON file">Import</a>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button title="View" class="dropbtn">View &#9662;</button>
+            <div class="dropdown-content">
+                <a onclick="toggle_leftsidebar()" title="Show/hide left sidebar">Show/hide left sidebar</a>
+                <a onclick="toggle_region_boundary_visibility()" title="Show or hide region boundaries">Show/hide region boundaries</a>
+                <a onclick="toggle_region_id_visibility()" title="Show or hide region labels">Show/hide region labels</a>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button onclick="show_about_panel()" title="Help" class="dropbtn">Help &#9662;</button>
+            <div class="dropdown-content">
+                <a onclick="show_getting_started_panel()" title="Getting started with VGG Image Annotator (VIA)">Getting Started</a>
+                <a onclick="show_license_panel()" title="VIA License">License</a>
+                <a onclick="show_about_panel()" title="About VGG Image Annotator (VIA)">About</a>
+            </div>
+        </div>
+
     </div>
+    <!-- end of #navbar -->
 </body>
 
 </html>
