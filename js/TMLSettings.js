@@ -1,6 +1,6 @@
 class TMLSettings {
     constructor() {
-        this.firstName = "Sergii";
-        this.secondName = "Liebodkin";
+        this.firstName = "";
+        this.secondName = "";
     }
 }
