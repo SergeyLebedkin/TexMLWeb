@@ -1,8 +1,30 @@
-.body_gray {
-    background: whitesmoke
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: content-box;
 }
-
-.name_style {
-    margin: 0px;
-    padding: 0px;
+.menu_button {
+    background-color: #4CAF50;
+    padding: 16px;
+    border: none;
+    color: white;
+}
+.top_panel {    
+    display: flex;
+    flex-direction: row;
+}
+.main_panel {
+    display: flex;
+    flex-direction: row;
+}
+.left_panel {    
+    width: 300px;
+    background: lightgray;
+    overflow: auto;
+}
+.right_panel {
+    width: 100%;
+    background: lightslategray;
+    overflow: auto;
 }
