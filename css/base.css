@@ -74,3 +74,23 @@ head {
 .dropdown:hover .dropdown-content {
     display: block;
 }
+
+.middle_panel {
+    position: relative;
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    z-index: 0;
+    padding: 0;
+}
+
+.leftsidebar {
+    display: table-cell;
+    width: 250px;
+}
+
+.display_area {
+    display: table-cell;
+    width: 100%;
+    margin: 0;
+}
