@@ -1,15 +1,41 @@
-// load page
-function loadPage() {
-    add_log_massage("Loaded!...");
-}
+// image canvas
+var tml_img_canvas = document.getElementById("image_canvas");
+var tml_reg_canvas = document.getElementById("region_canvas");
+var tml_img_ctx = tml_img_canvas.getContext("2d");
+var tml_reg_ctx = tml_reg_canvas.getContext("2d");
+
+// add events for canvases
+tml_reg_canvas.addEventListener('mousemove', evt => {
+    var mousePos = getMousePosByElement(tml_reg_canvas, evt);
+    var message = mousePos.x + ',' + mousePos.y + ";";
+    addLogMassage(message);
+}, false);
 
 // add the log massage function
-function add_log_massage(msg) {
+function addLogMassage(msg) {
     var logElement = document.getElementById("bottom_panel");
-    logElement.innerHTML += msg;
-    logElement.innerHTML += "<br/>";
-};
+    if (logElement) {
+        logElement.innerHTML = msg;
+    }
+}
 
+// get mause position for element
+function getMousePosByElement(el, evt) {
+    var rect = el.getBoundingClientRect();
+    return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+    };
+}
+
+// load page
+function loadPage() {
+    addLogMassage("Loaded!...");
+}
+
+loadPage();
+
+/*
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -3746,3 +3772,4 @@ function add_new_attribute(type, attribute_name) {
     }
     _via_is_user_adding_attribute_name = false;
 }
+*/
