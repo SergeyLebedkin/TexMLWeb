@@ -114,6 +114,7 @@ head {
     z-index: 0;
     padding: 0;
     font-family: Arial, Helvetica, sans-serif;
+    border: 1px green solid'
 }
 
 /* left sidebar */
@@ -129,4 +130,23 @@ head {
     padding: 5px;
     font-size: 14px;
     border: green solid 1px;
+}
+
+.right_sidebar {
+    width: 250px;
+    padding: 5px;
+}
+
+#image_canvas {
+    position: absolute;
+    border: 1px red solid;
+    width: 128px;
+    height: 128px;
+}
+
+#region_canvas {
+    position: absolute;
+    border: 1px orange solid;
+    width: 128px;
+    height: 128px;
 }
