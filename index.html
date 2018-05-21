@@ -58,7 +58,8 @@
                 1. Open files
             </div>
             <div class="bordered-panel">
-                <button class="load-images-btn">Load Images</button>
+                <button class="load-images-btn" onclick="load_image_btn()">Load Images</button>
+                <input type="file" id="invisible_file_input" multiple name="files[]" style="display:none">
             </div>
             <div class="menu-item-title">
                 2a. Image view
@@ -92,6 +93,7 @@
     </div>
 
     <!-- sripts-->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.1"> </script>
     <script type="text/javascript" src="js/scripts.js"></script>
 </body>
 

@@ -4,6 +4,64 @@ var tml_reg_canvas = document.getElementById("region_canvas");
 var tml_img_ctx = tml_img_canvas.getContext("2d");
 var tml_reg_ctx = tml_reg_canvas.getContext("2d");
 
+// UI html elements
+var invisible_file_input = document.getElementById("invisible_file_input");
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+
+function load_image_btn() {
+    if (invisible_file_input) {
+        invisible_file_input.accept = '.jpg,.jpeg,.png,.bmp';
+        invisible_file_input.onchange = load_images;
+        invisible_file_input.click();
+    }
+}
+
+function load_images(event) {
+    // Get the FileList object from the file select event
+    var files = event.target.files;
+
+    // Check if there are files in the FileList
+    if (files.length === 0) {
+        return;
+    }
+
+    // For this example we only want one image. We'll take the first.
+    var file = files[0];
+
+    // Check that the file is an image
+    if ((file.type !== '') && (!file.type.match('image.*'))) {
+        return;
+    }
+
+    // load from file
+    var fr = new FileReader();
+    fr.onload = function () {
+        // load image
+        var image = new Image();
+        image.onload = function () {
+            tml_img_canvas.width = image.width;
+            tml_img_canvas.height = image.height;
+            tml_reg_canvas.width = image.width;
+            tml_reg_canvas.height = image.height;
+            tml_img_ctx.drawImage(image, 0, 0);
+
+            tml_reg_ctx.globalAlpha = 0.7;
+            tml_reg_ctx.fillStyle="#FF0000";
+            tml_reg_ctx.fillRect(0,0,20,20);
+            tml_reg_ctx.globalAlpha = 1.0;
+
+            tml_reg_ctx.globalAlpha = 0.0;
+            tml_reg_ctx.clearRect(0, 0, tml_reg_canvas.width, tml_reg_canvas.height);
+            tml_reg_ctx.globalAlpha = 1.0;
+        }
+        image.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+}
+
 // add events for canvases
 tml_reg_canvas.addEventListener('mousemove', evt => {
     var mousePos = getMousePosByElement(tml_reg_canvas, evt);
@@ -11,21 +69,21 @@ tml_reg_canvas.addEventListener('mousemove', evt => {
     addLogMassage(message);
 }, false);
 
-// add the log massage function
-function addLogMassage(msg) {
-    var logElement = document.getElementById("bottom_panel");
-    if (logElement) {
-        logElement.innerHTML = msg;
-    }
-}
-
 // get mause position for element
 function getMousePosByElement(el, evt) {
     var rect = el.getBoundingClientRect();
     return {
         x: evt.clientX - rect.left,
         y: evt.clientY - rect.top
-    };
+    }
+}
+
+// add the log massage function
+function addLogMassage(msg) {
+    var logElement = document.getElementById("bottom_panel");
+    if (logElement) {
+        logElement.innerHTML = msg;
+    }
 }
 
 // load page
