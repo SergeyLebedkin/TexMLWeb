@@ -4,11 +4,78 @@ var tml_reg_canvas = document.getElementById("region_canvas");
 var tml_img_ctx = tml_img_canvas.getContext("2d");
 var tml_reg_ctx = tml_reg_canvas.getContext("2d");
 
+// image list
+var tml_image_list = [];
+
+// current values
+var tml_current_image_index = -1;
+var tml_current_region_index = -1;
+var tml_region_drawing_started = false;
+
+// image info types
+
+// ImageInfo
+function ImageInfo() {
+    this.fileRef = undefined;          // image url or local file ref.
+    this.fileName = "";
+    this.width = 0;
+    this.height = 0;
+    this.regions = [];
+};
+
+// ImageRegion
+function ImageRegion() {
+    this.isSelected = false;
+    this.color = "red";
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+};
+
+// craete image
+var image = new ImageInfo();
+
+// add image to list
+tml_image_list.push(image);
+tml_current_image_index = 0;
+
+
 // UI html elements
 var invisible_file_input = document.getElementById("invisible_file_input");
 
 //--------------------------------------------------------------------------
+// image drawing
 //--------------------------------------------------------------------------
+
+function clear_regions() {
+    // clear regions
+    tml_reg_ctx.globalAlpha = 0.0;
+    tml_reg_ctx.clearRect(0, 0, tml_reg_canvas.width, tml_reg_canvas.height);
+    tml_reg_ctx.globalAlpha = 1.0;
+}
+
+function draw_regions(imageIndex) {
+    // chech range
+    if ((imageIndex < 0) || (imageIndex >= tml_image_list.length))
+        return;
+
+    // clear regions
+    clear_regions();
+
+    var image = tml_image_list[imageIndex];
+    for (var i = 0; i < image.regions.length; i++) {
+        var region = image.regions[i];
+        // clear regions
+        tml_reg_ctx.globalAlpha = 0.5;
+        tml_reg_ctx.fillStyle = region.color;
+        tml_reg_ctx.fillRect(region.x, region.y, region.width, region.height);
+        tml_reg_ctx.globalAlpha = 1.0;
+    }
+}
+
+//--------------------------------------------------------------------------
+// image loading
 //--------------------------------------------------------------------------
 
 function load_image_btn() {
@@ -20,6 +87,7 @@ function load_image_btn() {
 }
 
 function load_images(event) {
+
     // Get the FileList object from the file select event
     var files = event.target.files;
 
@@ -42,32 +110,71 @@ function load_images(event) {
         // load image
         var image = new Image();
         image.onload = function () {
+            // draw image
             tml_img_canvas.width = image.width;
             tml_img_canvas.height = image.height;
             tml_reg_canvas.width = image.width;
             tml_reg_canvas.height = image.height;
             tml_img_ctx.drawImage(image, 0, 0);
-
-            tml_reg_ctx.globalAlpha = 0.7;
-            tml_reg_ctx.fillStyle="#FF0000";
-            tml_reg_ctx.fillRect(0,0,20,20);
-            tml_reg_ctx.globalAlpha = 1.0;
-
-            tml_reg_ctx.globalAlpha = 0.0;
-            tml_reg_ctx.clearRect(0, 0, tml_reg_canvas.width, tml_reg_canvas.height);
-            tml_reg_ctx.globalAlpha = 1.0;
         }
         image.src = fr.result;
     };
     fr.readAsDataURL(file);
 }
 
-// add events for canvases
-tml_reg_canvas.addEventListener('mousemove', evt => {
-    var mousePos = getMousePosByElement(tml_reg_canvas, evt);
-    var message = mousePos.x + ',' + mousePos.y + ";";
-    addLogMassage(message);
-}, false);
+//--------------------------------------------------------------------------
+// events
+//--------------------------------------------------------------------------
+
+//  onmouseup
+tml_reg_canvas.onmouseup = function (evt) {
+    tml_region_drawing_started = false;
+}
+
+// onmousedown
+tml_reg_canvas.onmousedown = function (evt) {
+    tml_region_drawing_started = true;
+    var image = tml_image_list[tml_current_image_index];
+
+    // get mouse coords
+    var mouseCoords = getMousePosByElement(tml_reg_canvas, evt);
+
+    // create new image region
+    var imageRegion = new ImageRegion();
+    imageRegion.isSelected = false;
+    imageRegion.color = getRandomColor();
+    imageRegion.x = mouseCoords.x;
+    imageRegion.y = mouseCoords.y;
+    imageRegion.width = 0;
+    imageRegion.height = 0;
+
+    // add new image region
+    image.regions.push(imageRegion);
+    tml_current_region_index = image.regions.length - 1;
+
+    // draw regions
+    draw_regions(tml_current_image_index);
+}
+
+// onmousemove
+tml_reg_canvas.onmousemove = function (evt) {
+    if (tml_region_drawing_started === true) {
+        // get current region
+        var imageRegion = tml_image_list[tml_current_image_index].regions[tml_current_region_index];
+        
+        // get mouse coords
+        var mouseCoords = getMousePosByElement(tml_reg_canvas, evt);
+        imageRegion.width = mouseCoords.x - imageRegion.x; 
+        imageRegion.height = mouseCoords.y - imageRegion.y; 
+
+        // draw regions
+        draw_regions(tml_current_image_index);
+    }
+}
+
+//--------------------------------------------------------------------------
+// utils
+//--------------------------------------------------------------------------
 
 // get mause position for element
 function getMousePosByElement(el, evt) {
@@ -91,7 +198,17 @@ function loadPage() {
     addLogMassage("Loaded!...");
 }
 
+function getRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
 loadPage();
+
 
 /*
 //--------------------------------------------------------------------------
