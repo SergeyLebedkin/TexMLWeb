@@ -41,7 +41,9 @@ html, body {
 
 .center-panel {
     flex-grow: 1;
-    padding: 5px;
+    overflow: auto;
+    text-align: center;
+    background: black;
 }
 
 .right-panel {
@@ -54,13 +56,7 @@ html, body {
 /* decorations */
 
 #image_canvas {
-    position: absolute;
     border: 1px solid orange;
-}
-
-#region_canvas {
-    position: absolute;
-    border: 1px solid green;
 }
 
 /* left menu elements */

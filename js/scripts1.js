@@ -12,6 +12,8 @@ ImageInfo = function (fileRef) {
     this.fileRef = fileRef;
     this.loaded = false;
     this.originalImageData = null;
+    this.colored = false;
+    this.coloredImageData = null;
     this.imageRegions = [];
     this.description = "";
 };
@@ -23,21 +25,47 @@ var gMainCanvas = document.getElementById("image_canvas");
 var gMainCanvasContext = gMainCanvas.getContext("2d");
 var gRegionDrawingStarted = false;
 var gCurrentImageRegion = new ImageRegion();
+var gGlobalScale = 3.0;
 
-// draw current image
-function DrawImage(image) {
-    if (image !== null) {
-        gMainCanvas.width = image.originalImageData.width;
-        gMainCanvas.height = image.originalImageData.height;
-        gMainCanvasContext.drawImage(image.originalImageData, 0, 0);
+// fray scale to JIT
+function GrayScaleToJit(value) {
+    var t = ((value - 127.0) / 255.0) * 2.0;
+    var result = {};
+    result.r = Clamp(1.5 - Math.abs(2.0 * t - 1.0), 0, 1);
+    result.g = Clamp(1.5 - Math.abs(2.0 * t), 0, 1);
+    result.b = Clamp(1.5 - Math.abs(2.0 * t + 1.0), 0, 1);
+    return result;
+}
+
+// apply color map
+function ApplyColorMap(imageInfo) {
+    imageInfo.colored = true;
+    for (var i = 0; i < imageInfo.coloredImageData.data.length; i += 4) {
+        var color = GrayScaleToJit(imageInfo.originalImageData.data[i+1]); // get green value
+        imageInfo.coloredImageData.data[i+0] = color.r * 255;
+        imageInfo.coloredImageData.data[i+1] = color.g * 255;
+        imageInfo.coloredImageData.data[i+2] = color.b * 255;
+        imageInfo.coloredImageData.data[i+3] = 255;
     }
 }
 
 // draw current image
-function DrawImageRegions(image) {
-    if (image !== null) {
-        for (var i = 0; i < image.imageRegions.length; i++) {
-            DrawImageRegion(image.imageRegions[i]);
+function DrawImage(imageInfo) {
+    if (imageInfo !== null) {
+        gMainCanvas.width = imageInfo.originalImageData.width;
+        gMainCanvas.height = imageInfo.originalImageData.height;
+        if (!imageInfo.colored)
+            ApplyColorMap(imageInfo);
+        gMainCanvasContext.putImageData(imageInfo.coloredImageData, 0, 0);
+        //gMainCanvasContext.putImageData(imageInfo.originalImageData, 0, 0);
+    }
+}
+
+// draw current image
+function DrawImageRegions(imageInfo) {
+    if (imageInfo !== null) {
+        for (var i = 0; i < imageInfo.imageRegions.length; i++) {
+            DrawImageRegion(imageInfo.imageRegions[i]);
         }
     }
 }
@@ -64,7 +92,16 @@ function ShowImage(imageIndex) {
         fileReader.onload = function (event) {
             var image = new Image();
             image.onload = function (event) {
-                gCurrentImageInfo.originalImageData = event.target;
+                // extract image data
+                var canvas = document.createElement('canvas');
+                canvas.width = event.target.width;
+                canvas.height = event.target.height;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(event.target, 0, 0);
+
+                // set image data to image info
+                gCurrentImageInfo.originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                gCurrentImageInfo.coloredImageData = new ImageData(canvas.width, canvas.height);
                 gCurrentImageInfo.loaded = true;
                 DrawImage(gCurrentImageInfo);
             }
@@ -164,3 +201,8 @@ function GetRandomColor() {
     }
     return color;
 }
+
+// clamp, just clamp
+function Clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+};
