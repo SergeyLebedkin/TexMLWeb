@@ -16,7 +16,7 @@ var tml_region_drawing_started = false;
 
 // ImageInfo
 function ImageInfo() {
-    this.fileRef = undefined;          // image url or local file ref.
+    this.fileRef = undefined;
     this.fileName = "";
     this.width = 0;
     this.height = 0;
@@ -106,18 +106,18 @@ function load_images(event) {
 
     // load from file
     var fr = new FileReader();
-    fr.onload = function () {
+    fr.onload = function (event) {
         // load image
         var image = new Image();
-        image.onload = function () {
+        image.onload = function (event) {
             // draw image
             tml_img_canvas.width = image.width;
             tml_img_canvas.height = image.height;
             tml_reg_canvas.width = image.width;
             tml_reg_canvas.height = image.height;
-            tml_img_ctx.drawImage(image, 0, 0);
+            tml_img_ctx.drawImage(event.target, 0, 0);
         }
-        image.src = fr.result;
+        image.src = event.target.result;
     };
     fr.readAsDataURL(file);
 }
@@ -161,11 +161,11 @@ tml_reg_canvas.onmousemove = function (evt) {
     if (tml_region_drawing_started === true) {
         // get current region
         var imageRegion = tml_image_list[tml_current_image_index].regions[tml_current_region_index];
-        
+
         // get mouse coords
         var mouseCoords = getMousePosByElement(tml_reg_canvas, evt);
-        imageRegion.width = mouseCoords.x - imageRegion.x; 
-        imageRegion.height = mouseCoords.y - imageRegion.y; 
+        imageRegion.width = mouseCoords.x - imageRegion.x;
+        imageRegion.height = mouseCoords.y - imageRegion.y;
 
         // draw regions
         draw_regions(tml_current_image_index);
