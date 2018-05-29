@@ -9,73 +9,32 @@
 
 <body>
     <div class="top-panel">
-        <div class="navbar">
-            <div class="dropdown">
-                <button onclick="show_home_panel()" title="Home" class="dropbtn">Home</button>
-            </div>
-
-            <div class="dropdown">
-                <button title="Image" class="dropbtn">Image &#9662;</button>
-                <div class="dropdown-content">
-                    <a onclick="sel_local_images()" title="Load (or add) a set of images from local disk">Load or Add Images</a>
-                    <a onclick="show_img_list()" title="Browse currently loaded images">List Images</a>
-                </div>
-            </div>
-
-            <div class="dropdown">
-                <button title="Annotations" class="dropbtn">Annotation &#9662;</button>
-                <div class="dropdown-content">
-                    <a onclick="show_annotation_data()" title="View annotations">View annotations</a>
-                    <a onclick="download_all_region_data('csv')" title="Save image region annotations as a CSV(comma separated value) file">Save as CSV</a>
-                    <a onclick="download_all_region_data('json')" title="Save image region annotations as a JSON(Javascript Object Notation) file">Save as JSON</a>
-                    <a onclick="sel_local_data_file('annotations')" title="Import existing region data from CSV or JSON file">Import</a>
-                </div>
-            </div>
-
-            <div class="dropdown">
-                <button title="View" class="dropbtn">View &#9662;</button>
-                <div class="dropdown-content">
-                    <a onclick="toggle_leftsidebar()" title="Show/hide left sidebar">Show/hide left sidebar</a>
-                    <a onclick="toggle_region_boundary_visibility()" title="Show or hide region boundaries">Show/hide region boundaries</a>
-                    <a onclick="toggle_region_id_visibility()" title="Show or hide region labels">Show/hide region labels</a>
-                </div>
-            </div>
-
-            <div class="dropdown">
-                <button onclick="show_about_panel()" title="Help" class="dropbtn">Help &#9662;</button>
-                <div class="dropdown-content">
-                    <a onclick="show_getting_started_panel()" title="Getting started with VGG Image Annotator (VIA)">Getting Started</a>
-                    <a onclick="show_license_panel()" title="VIA License">License</a>
-                    <a onclick="show_about_panel()" title="About VGG Image Annotator (VIA)">About</a>
-                </div>
-            </div>
-        </div>
-        <!-- end of #navbar -->
+        <!-- Empty  -->
     </div>
     <div class="main-panel">
         <div class="left-panel">
-            <div class="menu-item-title">
-                1. Open files
-            </div>
+            <!-- Open files  -->
+            <div class="menu-item-title">1. Open files</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="load_image_btn()">Load Images</button>
                 <input type="file" id="invisible_file_input" multiple name="files[]" style="display:none">
             </div>
-            <div class="menu-item-title">
-                2a. Image view
-            </div>
+            <!-- Image view  -->
+            <div class="menu-item-title">2. Image view</div>
             <div class="bordered-panel">
-                <button class="load-images-btn">View</button>
+                <div>
+                    <input onclick="ColorMapClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale" checked>
+                    <label>Gray scale</label>
+                    <input onclick="ColorMapClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
+                    <label>Jit</label>
+                </div>
+                <div>
+                    <select size="10" id="selImages" style="margin: 10">
+                    </select>
+                </div>
             </div>
-            <div class="menu-item-title">
-                2b. Assign Visual Signation
-            </div>
-            <div class="bordered-panel">
-                <button class="load-images-btn">Assign</button>
-            </div>
-            <div class="menu-item-title">
-                3. Submit
-            </div>
+            <!-- Submit  -->
+            <div class="menu-item-title">3. Submit</div>
             <div class="bordered-panel">
                 <button class="load-images-btn">Submit</button>
             </div>
@@ -88,9 +47,7 @@
         </div>
     </div>
     <div class="bottom-panel" id="bottom_panel">
-
     </div>
-
     <!-- sripts-->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.1"> </script>
     <script type="text/javascript" src="js/scripts1.js"></script>

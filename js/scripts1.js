@@ -1,3 +1,9 @@
+// enums
+var ColorMapTypeEnum = {
+    GRAY_SCALE: 1,
+    JIT: 2,
+};
+
 // Image Region
 ImageRegion = function () {
     this.color = "red";
@@ -9,6 +15,7 @@ ImageRegion = function () {
 
 // Image File Info
 ImageInfo = function (fileRef) {
+    this.name = "";
     this.fileRef = fileRef;
     this.loaded = false;
     this.originalImageData = null;
@@ -21,11 +28,20 @@ ImageInfo = function (fileRef) {
 // global variables
 var gImageList = [];
 var gCurrentImageInfo = null;
+var gImageInfoCounter = 0;
 var gMainCanvas = document.getElementById("image_canvas");
 var gMainCanvasContext = gMainCanvas.getContext("2d");
 var gRegionDrawingStarted = false;
-var gCurrentImageRegion = new ImageRegion();
-var gGlobalScale = 3.0;
+var gSelectionImageRegion = new ImageRegion();
+var gCurrentColorMapType = ColorMapTypeEnum.GRAY_SCALE;
+var gImageSelector = document.getElementById("selImages");
+
+// set colored flags for all images
+function SetColoredFlags(value = false) {
+    for (var i = 0; i < gImageList.length; i++) {
+        gImageList[i].colored = value;
+    }
+}
 
 // fray scale to JIT
 function GrayScaleToJit(value) {
@@ -41,11 +57,16 @@ function GrayScaleToJit(value) {
 function ApplyColorMap(imageInfo) {
     imageInfo.colored = true;
     for (var i = 0; i < imageInfo.coloredImageData.data.length; i += 4) {
-        var color = GrayScaleToJit(imageInfo.originalImageData.data[i+1]); // get green value
-        imageInfo.coloredImageData.data[i+0] = color.r * 255;
-        imageInfo.coloredImageData.data[i+1] = color.g * 255;
-        imageInfo.coloredImageData.data[i+2] = color.b * 255;
-        imageInfo.coloredImageData.data[i+3] = 255;
+        // jit color map
+        if (gCurrentColorMapType === ColorMapTypeEnum.JIT) {
+            var color = GrayScaleToJit(imageInfo.originalImageData.data[i + 1]); // get green value
+            imageInfo.coloredImageData.data[i + 0] = color.r * 255;
+            imageInfo.coloredImageData.data[i + 1] = color.g * 255;
+            imageInfo.coloredImageData.data[i + 2] = color.b * 255;
+            imageInfo.coloredImageData.data[i + 3] = 255;
+        } else {
+            console.log("unsupported color map type");
+        }
     }
 }
 
@@ -54,10 +75,15 @@ function DrawImage(imageInfo) {
     if (imageInfo !== null) {
         gMainCanvas.width = imageInfo.originalImageData.width;
         gMainCanvas.height = imageInfo.originalImageData.height;
-        if (!imageInfo.colored)
-            ApplyColorMap(imageInfo);
-        gMainCanvasContext.putImageData(imageInfo.coloredImageData, 0, 0);
-        //gMainCanvasContext.putImageData(imageInfo.originalImageData, 0, 0);
+        // draw original image
+        if (gCurrentColorMapType === ColorMapTypeEnum.GRAY_SCALE) {
+            gMainCanvasContext.putImageData(imageInfo.originalImageData, 0, 0);
+        } else {
+            // draw colored image
+            if (!imageInfo.colored)
+                ApplyColorMap(imageInfo);
+            gMainCanvasContext.putImageData(imageInfo.coloredImageData, 0, 0);
+        }
     }
 }
 
@@ -91,6 +117,9 @@ function ShowImage(imageIndex) {
         var fileReader = new FileReader();
         fileReader.onload = function (event) {
             var image = new Image();
+            image.onprogress = function (event) {
+                console.log(event);
+            }
             image.onload = function (event) {
                 // extract image data
                 var canvas = document.createElement('canvas');
@@ -119,6 +148,8 @@ function load_image_btn() {
             for (var i = 0; i < event.target.files.length; i++) {
                 var imageInfo = new ImageInfo(event.target.files[i]);
                 gImageList.push(imageInfo);
+                AddImageInfoToSelector(imageInfo);
+                gImageInfoCounter++;
             }
             ShowImage(gImageList.length - 1);
         }
@@ -130,17 +161,31 @@ function load_image_btn() {
 // events
 //--------------------------------------------------------------------------
 
+function ColorMapClick() {
+    if (document.getElementById("rbGrayScale").checked) {
+        gCurrentColorMapType = ColorMapTypeEnum.GRAY_SCALE;
+    } else {
+        SetColoredFlags(false);
+        gCurrentColorMapType = ColorMapTypeEnum.JIT;
+    }
+    // draw all current stuff
+    DrawImage(gCurrentImageInfo);
+    DrawImageRegions(gCurrentImageInfo);
+}
+
 //  onmouseup
 gMainCanvas.onmouseup = function (evt) {
     if (gRegionDrawingStarted) {
-        if ((Math.abs(gCurrentImageRegion.width) > 16) || (Math.abs(gCurrentImageRegion.width) > 16)) {
-            // copy region and add to list
+        if ((Math.abs(gSelectionImageRegion.width) > 16) || (Math.abs(gSelectionImageRegion.width) > 16)) {
+            // copy region 
             var imageRegion = new ImageRegion();
-            imageRegion.color = gCurrentImageRegion.color;
-            imageRegion.x = gCurrentImageRegion.x;
-            imageRegion.y = gCurrentImageRegion.y;
-            imageRegion.width = gCurrentImageRegion.width;
-            imageRegion.height = gCurrentImageRegion.height;
+            imageRegion.color = gSelectionImageRegion.color;
+            imageRegion.x = gSelectionImageRegion.x;
+            imageRegion.y = gSelectionImageRegion.y;
+            imageRegion.width = gSelectionImageRegion.width;
+            imageRegion.height = gSelectionImageRegion.height;
+
+            // add to list
             gCurrentImageInfo.imageRegions.push(imageRegion);
         } else {
             alert("Region is too small");
@@ -160,28 +205,39 @@ gMainCanvas.onmousedown = function (evt) {
     var mouseCoords = GetMousePosByElement(gMainCanvas, evt);
 
     // set new image region
-    gCurrentImageRegion.x = mouseCoords.x;
-    gCurrentImageRegion.y = mouseCoords.y;
-    gCurrentImageRegion.color = GetRandomColor();
-    gCurrentImageRegion.width = 0;
-    gCurrentImageRegion.height = 0;
+    gSelectionImageRegion.x = mouseCoords.x;
+    gSelectionImageRegion.y = mouseCoords.y;
+    gSelectionImageRegion.color = GetRandomColor();
+    gSelectionImageRegion.width = 0;
+    gSelectionImageRegion.height = 0;
 }
 
 // onmousemove
 gMainCanvas.onmousemove = function (evt) {
     if (gRegionDrawingStarted === true) {
         var mouseCoords = GetMousePosByElement(gMainCanvas, evt);
-        gCurrentImageRegion.width = mouseCoords.x - gCurrentImageRegion.x;
-        gCurrentImageRegion.height = mouseCoords.y - gCurrentImageRegion.y;
+        gSelectionImageRegion.width = mouseCoords.x - gSelectionImageRegion.x;
+        gSelectionImageRegion.height = mouseCoords.y - gSelectionImageRegion.y;
         DrawImage(gCurrentImageInfo);
         DrawImageRegions(gCurrentImageInfo);
-        DrawImageRegion(gCurrentImageRegion);
+        DrawImageRegion(gSelectionImageRegion);
     }
 }
 
 //--------------------------------------------------------------------------
 // utils
 //--------------------------------------------------------------------------
+
+// add new image info to selector
+function AddImageInfoToSelector(imageInfo) {
+    // create new selector
+    selector = document.createElement('option');
+    selector.value = imageInfo.fileRef.name;
+    selector.innerHTML = imageInfo.fileRef.name;
+
+    // append selectr
+    gImageSelector.appendChild(selector);
+}
 
 // get mause position for element
 function GetMousePosByElement(el, evt) {
