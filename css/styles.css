@@ -27,6 +27,7 @@ html, body {
     overflow: auto;
     height: 100px;
     border: 2px solid green;
+    min-height: 100px;
     font-family: 'Courier New', Courier, monospace;
 }
 
@@ -47,7 +48,10 @@ html, body {
 }
 
 .right-panel {
+    display: flex;
+    flex-direction: column;
     min-width: 300px;
+    max-width: 300px;
     padding: 5px;
     overflow: auto;
     border: 2px solid green;

@@ -108,18 +108,17 @@ function DrawImageRegion(region) {
 }
 
 // show image
-function ShowImage(imageIndex) {
-    gCurrentImageInfo = gImageList[imageIndex];
+function ShowImage(imageInfo) {
+    gCurrentImageInfo = imageInfo;
     if (gCurrentImageInfo.loaded) {
         DrawImage(gCurrentImageInfo);
         DrawImageRegions(gCurrentImageInfo);
     } else {
         var fileReader = new FileReader();
+        fileReader.imageInfo = imageInfo;
         fileReader.onload = function (event) {
             var image = new Image();
-            image.onprogress = function (event) {
-                console.log(event);
-            }
+            image.imageInfo1 = event.target.imageInfo;
             image.onload = function (event) {
                 // extract image data
                 var canvas = document.createElement('canvas');
@@ -133,6 +132,7 @@ function ShowImage(imageIndex) {
                 gCurrentImageInfo.coloredImageData = new ImageData(canvas.width, canvas.height);
                 gCurrentImageInfo.loaded = true;
                 DrawImage(gCurrentImageInfo);
+                DrawImageRegions(gCurrentImageInfo);
             }
             image.src = event.target.result;
         }
@@ -151,7 +151,6 @@ function load_image_btn() {
                 AddImageInfoToSelector(imageInfo);
                 gImageInfoCounter++;
             }
-            ShowImage(gImageList.length - 1);
         }
         invisible_file_input.click();
     }
@@ -169,8 +168,7 @@ function ColorMapClick() {
         gCurrentColorMapType = ColorMapTypeEnum.JIT;
     }
     // draw all current stuff
-    DrawImage(gCurrentImageInfo);
-    DrawImageRegions(gCurrentImageInfo);
+    ShowImage(gCurrentImageInfo);
 }
 
 //  onmouseup
@@ -224,6 +222,10 @@ gMainCanvas.onmousemove = function (evt) {
     }
 }
 
+gImageSelector.onchange = function (evt) {
+    ShowImage(gImageList[gImageSelector.selectedIndex]);
+}
+
 //--------------------------------------------------------------------------
 // utils
 //--------------------------------------------------------------------------
@@ -232,7 +234,7 @@ gMainCanvas.onmousemove = function (evt) {
 function AddImageInfoToSelector(imageInfo) {
     // create new selector
     selector = document.createElement('option');
-    selector.value = imageInfo.fileRef.name;
+    selector.value = imageInfo.fileRef;
     selector.innerHTML = imageInfo.fileRef.name;
 
     // append selectr
