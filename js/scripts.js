@@ -1,8 +1,14 @@
-// enums
+// ColorMapTypeEnum
 var ColorMapTypeEnum = {
     GRAY_SCALE: 1,
     JIT: 2
 };
+
+// SelectionModeEnum
+var SelectionModeEnum = {
+    ADD: 1,
+    REMOVE: 2
+}
 
 // RegionInfo
 class RegionInfo {
@@ -29,8 +35,8 @@ class ImageInfo {
         var fileReader = new FileReader();
         fileReader.imageInfo = this;
         fileReader.onload = function (event) {
-            event.target.imageInfo.image = new Image();
-            event.target.imageInfo.image.src = event.target.result;
+            event.currentTarget.imageInfo.image = new Image();
+            event.currentTarget.imageInfo.image.src = event.currentTarget.result;
         }
         fileReader.readAsDataURL(this.fileRef);
     }
@@ -46,6 +52,7 @@ class ImageInfoListView {
 
     // drawImageList
     update() {
+        // just clear
         this.clear();
 
         // add new items
@@ -78,19 +85,83 @@ class ImageInfoListView {
     }
 }
 
-// ImageViewer
+// ImageInfoViewer
 class ImageInfoViewer {
-    constructor() {
+    constructor(parent) {
         this.imageInfo = null; // current raw image info
         this.imageBuffer = new Image(); // colored image buffer
         this.imageBuffer.imageInfoViewer = this;
         this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
-        // get controls
-        this.imageCanvas = document.getElementById("image_canvas");
+        this.selectionStarted = false;
+        this.selectionMode = SelectionModeEnum.ADD;
+        this.selectionRegionInfo = new RegionInfo();
+
+        // create controls
+        this.parent = parent;
+        this.imageCanvas = document.createElement("canvas");
+        this.imageCanvas.style.border = "1px solid orange";
         this.imageCanvasCtx = this.imageCanvas.getContext('2d');
-    };
+        this.parent.appendChild(this.imageCanvas);
+        this.parent.imageInfoViewer = this;
+
+        // add event - mousemove
+        this.parent.addEventListener("mousemove", function (event) {
+            // get base data
+            var imageInfoViewer = event.currentTarget.imageInfoViewer;
+            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
+
+            // update selection region info
+            if (imageInfoViewer.selectionStarted) {
+                imageInfoViewer.selectionRegionInfo.width = mouseCoords.x - imageInfoViewer.selectionRegionInfo.x;
+                imageInfoViewer.selectionRegionInfo.height = mouseCoords.y - imageInfoViewer.selectionRegionInfo.y;
+
+                // redraw stuff
+                imageInfoViewer.redraw();
+                imageInfoViewer.drawSelectionRegion();
+            }
+        });
+        // add event - mouseup
+        this.parent.addEventListener("mouseup", function (event) {
+            // get base data
+            var imageInfoViewer = event.currentTarget.imageInfoViewer;
+            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
+
+            // proceed selection
+            if (imageInfoViewer.selectionStarted) {
+                // craete region info 
+                var regionInfo = new RegionInfo();
+                regionInfo.color  = imageInfoViewer.selectionRegionInfo.color;
+                regionInfo.x      = imageInfoViewer.selectionRegionInfo.x;
+                regionInfo.y      = imageInfoViewer.selectionRegionInfo.y;
+                regionInfo.width  = imageInfoViewer.selectionRegionInfo.width;
+                regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
+                imageInfoViewer.imageInfo.regions.push(regionInfo);
+
+                // redraw all stuff
+                imageInfoViewer.redraw();
+            }
+            imageInfoViewer.selectionStarted = false;
+        });
+        // add event - mousedown
+        this.parent.addEventListener("mousedown", function (event) {
+            // get base data
+            var imageInfoViewer = event.currentTarget.imageInfoViewer;
+            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
+
+            // set selection state and setup selection region
+            if (imageInfoViewer.imageInfo !== null) {
+                imageInfoViewer.selectionStarted = true;
+                imageInfoViewer.selectionRegionInfo.color = generateRandomColor();
+                imageInfoViewer.selectionRegionInfo.x = mouseCoords.x;
+                imageInfoViewer.selectionRegionInfo.y = mouseCoords.y;
+                imageInfoViewer.selectionRegionInfo.width = 0;
+                imageInfoViewer.selectionRegionInfo.height = 0;
+            }
+        });
+    }
 
     // setImageInfo
+    // NOTE: This is async function
     setImageInfo(imageInfo) {
         // check for null
         if (imageInfo === null) {
@@ -114,6 +185,7 @@ class ImageInfoViewer {
     }
 
     // setColorMapType
+    // NOTE: This is async function
     setColorMapType(colorMapType) {
         if (this.colorMapType !== colorMapType) {
             this.colorMapType = colorMapType;
@@ -124,6 +196,7 @@ class ImageInfoViewer {
     }
 
     // updateImageCache
+    // NOTE: This is async function
     updateImageBuffer() {
         // check for null
         if (this.imageInfo === null)
@@ -141,7 +214,7 @@ class ImageInfoViewer {
             ctx.drawImage(this.imageInfo.image, 0, 0);
 
             // copy img
-            this.imageBuffer.onload = function (event) { event.target.imageInfoViewer.redraw(); };
+            this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
             this.imageBuffer.src = canvas.toDataURL("image/png");
         }
 
@@ -173,7 +246,7 @@ class ImageInfoViewer {
             console.log(imageData);
 
             // copy img
-            this.imageBuffer.onload = function (event) { event.target.imageInfoViewer.redraw(); };
+            this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
             this.imageBuffer.src = canvas.toDataURL("image/png");
         }
     }
@@ -201,6 +274,16 @@ class ImageInfoViewer {
         }
     }
 
+    // drawImageRegions
+    drawSelectionRegion() {
+        if (this.selectionStarted) {
+            this.imageCanvasCtx.globalAlpha = 0.85;
+            this.imageCanvasCtx.fillStyle = this.selectionRegionInfo.color;
+            this.imageCanvasCtx.fillRect(this.selectionRegionInfo.x, this.selectionRegionInfo.y, this.selectionRegionInfo.width, this.selectionRegionInfo.height);
+            this.imageCanvasCtx.globalAlpha = 1.0;
+        }
+    }
+
     // update
     redraw() {
         this.drawImageBuffer();
@@ -209,7 +292,9 @@ class ImageInfoViewer {
 
     // clear
     clear() {
-        // TODO: JUST DRAW EMPTY CANVAS
+        this.imageCanvas.width = 300;
+        this.imageCanvas.height = 150;
+        this.imageCanvasCtx.rect(0, 0, this.imageCanvas.width, this.imageCanvas.height);
     }
 }
 
@@ -261,7 +346,7 @@ class ImageRegionListViewer {
 // global classes
 var gImageInfoList = [];
 var gImageInfoListView = new ImageInfoListView(gImageInfoList);
-var gImageInfoViewer = new ImageInfoViewer();
+var gImageInfoViewer = new ImageInfoViewer(center_panel);
 var gImageRegionListViewer = new ImageRegionListViewer();
 
 //--------------------------------------------------------------------------
@@ -278,14 +363,14 @@ function colorMapTypeClick() {
 }
 
 // load images button event
-function load_image_btn_click() {
+function loadImageBtnClick() {
     if (invisible_file_input) {
         invisible_file_input.accept = '.jpg,.jpeg,.png,.bmp';
         invisible_file_input.onchange = function (event) {
-            for (var i = 0; i < event.target.files.length; i++) {
+            for (var i = 0; i < event.currentTarget.files.length; i++) {
                 // create image info
                 var imageInfo = new ImageInfo();
-                imageInfo.fileRef = event.target.files[i];
+                imageInfo.fileRef = event.currentTarget.files[i];
                 imageInfo.loadFromFile();
                 // add image info
                 gImageInfoList.push(imageInfo);
@@ -299,7 +384,7 @@ function load_image_btn_click() {
 
 // image info list item click
 function imageInfoListItemClick(event) {
-    gImageInfoViewer.setImageInfo(event.target.imageInfo);
+    gImageInfoViewer.setImageInfo(event.currentTarget.imageInfo);
 }
 
 //--------------------------------------------------------------------------
@@ -343,4 +428,23 @@ function grayscaleToJit(value) {
 // clamp, just clamp
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
-};
+}
+
+// get mause position for element
+function getMousePosByElement(node, event) {
+    var rect = node.getBoundingClientRect();
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    }
+}
+
+// generate random color
+function generateRandomColor() {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}

@@ -16,7 +16,7 @@
             <!-- Open files  -->
             <div class="menu-item-title">1. Open files</div>
             <div class="bordered-panel">
-                <button class="load-images-btn" onclick="load_image_btn_click()">Load Images</button>
+                <button class="load-images-btn" onclick="loadImageBtnClick()">Load Images</button>
                 <input type="file" id="invisible_file_input" multiple name="files[]" style="display:none">
             </div>
             <!-- Image view  -->
@@ -39,8 +39,7 @@
                 <button class="load-images-btn">Submit</button>
             </div>
         </div>
-        <div class="center-panel">
-            <canvas id="image_canvas"></canvas>
+        <div class="center-panel" id="center_panel">
         </div>
         <div class="right-panel">
             <select id="imageInfoRegionsSelector">

@@ -145,7 +145,7 @@ function ShowImage(imageInfo) {
 }
 
 // load images button event
-function load_image_btn_click() {
+function loadImageBtnClick() {
     if (invisible_file_input) {
         invisible_file_input.accept = '.jpg,.jpeg,.png,.bmp';
         invisible_file_input.onchange = function (event) {

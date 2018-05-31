@@ -57,11 +57,9 @@ html, body {
     border: 2px solid green;
 }
 
-/* decorations */
+/* canvases */
 
-#image_canvas {
-    border: 1px solid orange;
-}
+/* decorations */
 
 #image_list_container {
     display: flex;
