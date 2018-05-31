@@ -28,6 +28,7 @@ ImageInfo = function (fileRef) {
 // global variables
 var gImageList = [];
 var gCurrentImageInfo = null;
+var gCurrentImageInfoRegions = null;
 var gImageInfoCounter = 0;
 var gMainCanvas = document.getElementById("image_canvas");
 var gMainCanvasContext = gMainCanvas.getContext("2d");
@@ -35,6 +36,9 @@ var gRegionDrawingStarted = false;
 var gSelectionImageRegion = new ImageRegion();
 var gCurrentColorMapType = ColorMapTypeEnum.GRAY_SCALE;
 var gImageSelector = document.getElementById("selImages");
+var gImageRegionsSelector = document.getElementById("selImageRegions");
+var gRegionPreview = document.getElementById("region_preview");
+
 
 // set colored flags for all images
 function SetColoredFlags(value = false) {
@@ -151,6 +155,7 @@ function load_image_btn() {
                 AddImageInfoToSelector(imageInfo);
                 gImageInfoCounter++;
             }
+            UpdateRegionPreview(gImageList[gImageRegionsSelector.selectedIndex])
         }
         invisible_file_input.click();
     }
@@ -191,6 +196,10 @@ gMainCanvas.onmouseup = function (evt) {
         // draw all current stuff
         DrawImage(gCurrentImageInfo);
         DrawImageRegions(gCurrentImageInfo);
+
+        // Update Region Preview
+        if (gCurrentImageInfo === gCurrentImageInfoRegions)
+            UpdateRegionPreview(gCurrentImageInfoRegions);
     }
     gRegionDrawingStarted = false;
 }
@@ -226,19 +235,51 @@ gImageSelector.onchange = function (evt) {
     ShowImage(gImageList[gImageSelector.selectedIndex]);
 }
 
+gImageRegionsSelector.onchange = function (evt) {
+    UpdateRegionPreview(gImageList[gImageRegionsSelector.selectedIndex]);
+}
+
 //--------------------------------------------------------------------------
 // utils
 //--------------------------------------------------------------------------
 
+// uodate region preview
+function UpdateRegionPreview(imageInfo) {
+    // set current image info regions
+    gCurrentImageInfoRegions = imageInfo;
+
+    // clear preview
+    while (gRegionPreview.firstChild) {
+        gRegionPreview.removeChild(gRegionPreview.firstChild);
+    }
+
+    // check for null
+    if (gCurrentImageInfoRegions === null) 
+        return;
+
+    // itarate by regions
+    for (var i = 0; i < imageInfo.imageRegions.length; i++) {
+        gRegionPreview.innerHTML += 
+            "(" + 
+            imageInfo.imageRegions[i].x + ";" +
+            imageInfo.imageRegions[i].y + ")" +
+            "<br></br>";
+    }
+}
+
 // add new image info to selector
 function AddImageInfoToSelector(imageInfo) {
     // create new selector
-    selector = document.createElement('option');
-    selector.value = imageInfo.fileRef;
-    selector.innerHTML = imageInfo.fileRef.name;
+    var selectorImage = document.createElement('option');
+    selectorImage.value = imageInfo.fileRef;
+    selectorImage.innerHTML = imageInfo.fileRef.name;
+    gImageSelector.appendChild(selectorImage);
 
-    // append selectr
-    gImageSelector.appendChild(selector);
+    // create new selector
+    var selectorImageRegions = document.createElement('option');
+    selectorImageRegions.value = imageInfo.fileRef;
+    selectorImageRegions.innerHTML = imageInfo.fileRef.name;
+    gImageRegionsSelector.appendChild(selectorImageRegions);
 }
 
 // get mause position for element

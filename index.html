@@ -28,8 +28,8 @@
                     <input onclick="ColorMapClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
                     <label>JIT</label>
                 </div>
-                <div>
-                    <select size="10" id="selImages" onselect="selImageSelect()">
+                <div id="image_list_container">
+                    <select size="10" id="selImages">
                     </select>
                 </div>
             </div>
@@ -43,7 +43,11 @@
             <canvas id="image_canvas"></canvas>
         </div>
         <div class="right-panel">
-            Preview:
+            <select id="selImageRegions">
+            </select>
+            <div id="region_preview">
+
+            </div>
         </div>
     </div>
     <div class="bottom-panel" id="bottom_panel">
