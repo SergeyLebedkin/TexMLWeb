@@ -36,7 +36,7 @@ var gRegionDrawingStarted = false;
 var gSelectionImageRegion = new ImageRegion();
 var gCurrentColorMapType = ColorMapTypeEnum.GRAY_SCALE;
 var gImageSelector = document.getElementById("selImages");
-var gImageRegionsSelector = document.getElementById("selImageRegions");
+var gImageRegionsSelector = document.getElementById("imageInfoRegionsSelector");
 var gRegionPreview = document.getElementById("region_preview");
 
 
@@ -145,7 +145,7 @@ function ShowImage(imageInfo) {
 }
 
 // load images button event
-function load_image_btn() {
+function load_image_btn_click() {
     if (invisible_file_input) {
         invisible_file_input.accept = '.jpg,.jpeg,.png,.bmp';
         invisible_file_input.onchange = function (event) {
@@ -165,7 +165,7 @@ function load_image_btn() {
 // events
 //--------------------------------------------------------------------------
 
-function ColorMapClick() {
+function colorMapTypeClick() {
     if (document.getElementById("rbGrayScale").checked) {
         gCurrentColorMapType = ColorMapTypeEnum.GRAY_SCALE;
     } else {

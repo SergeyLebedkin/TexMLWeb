@@ -16,16 +16,16 @@
             <!-- Open files  -->
             <div class="menu-item-title">1. Open files</div>
             <div class="bordered-panel">
-                <button class="load-images-btn" onclick="load_image_btn()">Load Images</button>
+                <button class="load-images-btn" onclick="load_image_btn_click()">Load Images</button>
                 <input type="file" id="invisible_file_input" multiple name="files[]" style="display:none">
             </div>
             <!-- Image view  -->
             <div class="menu-item-title">2. Image view</div>
             <div class="bordered-panel">
                 <div>
-                    <input onclick="ColorMapClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale" checked>
+                    <input onclick="colorMapTypeClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale" checked>
                     <label>Gray scale</label>
-                    <input onclick="ColorMapClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
+                    <input onclick="colorMapTypeClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
                     <label>JIT</label>
                 </div>
                 <div id="image_list_container">
@@ -43,7 +43,7 @@
             <canvas id="image_canvas"></canvas>
         </div>
         <div class="right-panel">
-            <select id="selImageRegions">
+            <select id="imageInfoRegionsSelector">
             </select>
             <div id="region_preview">
 
@@ -54,7 +54,7 @@
     </div>
     <!-- sripts-->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.1"> </script>
-    <script type="text/javascript" src="js/scripts1.js"></script>
+    <script type="text/javascript" src="js/scripts.js"></script>
 </body>
 
 </html>
