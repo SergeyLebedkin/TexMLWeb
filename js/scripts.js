@@ -46,6 +46,7 @@ class ImageInfo {
 class ImageInfoListView {
     constructor(imageInfoList) {
         this.imageInfoList = imageInfoList;
+        this.imageInfoActive = imageInfoList;
         // get controls
         this.imageListContainer = document.getElementById("image_list_container");
     }
@@ -59,6 +60,8 @@ class ImageInfoListView {
         for (var i = 0; i < this.imageInfoList.length; i++)
             this.addItemInfoListItem(this.imageInfoList[i]);
     }
+
+    
 
     // addItemInfoListItem
     addItemInfoListItem(imageInfo) {
@@ -92,9 +95,11 @@ class ImageInfoViewer {
         this.imageBuffer = new Image(); // colored image buffer
         this.imageBuffer.imageInfoViewer = this;
         this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
+        this.scale = 1.0;
         this.selectionStarted = false;
         this.selectionMode = SelectionModeEnum.ADD;
         this.selectionRegionInfo = new RegionInfo();
+        this.onchange = null;
 
         // create controls
         this.parent = parent;
@@ -108,10 +113,10 @@ class ImageInfoViewer {
         this.parent.addEventListener("mousemove", function (event) {
             // get base data
             var imageInfoViewer = event.currentTarget.imageInfoViewer;
-            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
 
             // update selection region info
             if (imageInfoViewer.selectionStarted) {
+                var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 imageInfoViewer.selectionRegionInfo.width = mouseCoords.x - imageInfoViewer.selectionRegionInfo.x;
                 imageInfoViewer.selectionRegionInfo.height = mouseCoords.y - imageInfoViewer.selectionRegionInfo.y;
 
@@ -124,10 +129,10 @@ class ImageInfoViewer {
         this.parent.addEventListener("mouseup", function (event) {
             // get base data
             var imageInfoViewer = event.currentTarget.imageInfoViewer;
-            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
 
             // proceed selection
             if (imageInfoViewer.selectionStarted) {
+                var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 // craete region info 
                 var regionInfo = new RegionInfo();
                 regionInfo.color  = imageInfoViewer.selectionRegionInfo.color;
@@ -139,6 +144,10 @@ class ImageInfoViewer {
 
                 // redraw all stuff
                 imageInfoViewer.redraw();
+
+                // call event
+                if (imageInfoViewer.onchange)
+                    imageInfoViewer.onchange(imageInfoViewer.imageInfo);
             }
             imageInfoViewer.selectionStarted = false;
         });
@@ -146,10 +155,10 @@ class ImageInfoViewer {
         this.parent.addEventListener("mousedown", function (event) {
             // get base data
             var imageInfoViewer = event.currentTarget.imageInfoViewer;
-            var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
 
             // set selection state and setup selection region
             if (imageInfoViewer.imageInfo !== null) {
+                var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 imageInfoViewer.selectionStarted = true;
                 imageInfoViewer.selectionRegionInfo.color = generateRandomColor();
                 imageInfoViewer.selectionRegionInfo.x = mouseCoords.x;
@@ -189,6 +198,16 @@ class ImageInfoViewer {
     setColorMapType(colorMapType) {
         if (this.colorMapType !== colorMapType) {
             this.colorMapType = colorMapType;
+            this.updateImageBuffer();
+            //this.drawImageBuffer();
+            //this.drawImageRegions();
+        }
+    }
+
+    // set scale
+    setScale(scale) {
+        if (this.scale !== scale) {
+            this.scale = scale;
             this.updateImageBuffer();
             //this.drawImageBuffer();
             //this.drawImageRegions();
@@ -333,12 +352,19 @@ class ImageRegionListViewer {
     // drawRegions
     drawRegionList() {
         // clear data
-        clear();
+        this.clear();
 
         // check for null
         if (this.imageInfo === null)
             return;
 
+        // this is temporary solution. There will be previews
+        for (var i = 0; i < this.imageInfo.regions.length; i++) {
+            var region = this.imageInfo.regions[i];
+            var a = document.createElement("a");
+            a.text = "(" + region.x + ";" + region.y + ")";
+            this.regionListContainer.appendChild(a);
+        }
         // TODO: JUST DRAW region list (as internal canvases)
     }
 }
@@ -346,7 +372,8 @@ class ImageRegionListViewer {
 // global classes
 var gImageInfoList = [];
 var gImageInfoListView = new ImageInfoListView(gImageInfoList);
-var gImageInfoViewer = new ImageInfoViewer(center_panel);
+var gImageInfoViewer = new ImageInfoViewer(image_canvas_panel);
+gImageInfoViewer.onchange = onchangeImageInfo;
 var gImageRegionListViewer = new ImageRegionListViewer();
 
 //--------------------------------------------------------------------------
@@ -387,6 +414,28 @@ function imageInfoListItemClick(event) {
     gImageInfoViewer.setImageInfo(event.currentTarget.imageInfo);
 }
 
+// image info list item click
+function onchangeImageInfo(imageInfo) {
+    if (gImageRegionListViewer.imageInfo === imageInfo)
+        gImageRegionListViewer.drawRegionList();
+}
+
+// scale down bnt click
+function scaleDownBntClick(event) {
+    gImageInfoViewer.setScale(gImageInfoViewer.scale/2);
+}
+
+// scale up bnt click
+function scaleUpBtnClick(event) {
+    gImageInfoViewer.setScale(gImageInfoViewer.scale*2);
+}
+
+
+// image info regions selector change
+function imageInfoRegionsSelectorChange(event) {
+    gImageRegionListViewer.setImageInfo(gImageInfoList[imageInfoRegionsSelector.selectedIndex]);
+}
+
 //--------------------------------------------------------------------------
 // utils
 //--------------------------------------------------------------------------
@@ -406,7 +455,7 @@ function imageInfoRegionsSelectorUpdate() {
         for (var i = 0; i < gImageInfoList.length; i++) {
             // create new selector
             var imageInfoRegionsOption = document.createElement('option');
-            imageInfoRegionsOption.value = gImageInfoList[i].fileRef;
+            imageInfoRegionsOption.value = gImageInfoList[i];
             imageInfoRegionsOption.innerHTML = gImageInfoList[i].fileRef.name;
             imageInfoRegionsSelector.appendChild(imageInfoRegionsOption);
         }

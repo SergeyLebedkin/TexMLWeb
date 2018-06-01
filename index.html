@@ -40,9 +40,16 @@
             </div>
         </div>
         <div class="center-panel" id="center_panel">
+            <div id="center_panel_controls">
+                <button id="scaleDownBnt" onclick="scaleDownBntClick()">-</button>
+                <button id="scaleUpBtn" onclick="scaleUpBtnClick()">+</button>
+            </div>
+            <div id="image_canvas_panel">
+                
+            </div>
         </div>
         <div class="right-panel">
-            <select id="imageInfoRegionsSelector">
+            <select id="imageInfoRegionsSelector" onchange="imageInfoRegionsSelectorChange()">
             </select>
             <div id="region_preview">
 

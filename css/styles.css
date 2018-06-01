@@ -36,14 +36,13 @@ html, body {
 .left-panel {
     min-width: 300px;
     padding: 5px;
-    overflow: auto;
     border: 2px solid green;
 }
 
 .center-panel {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
-    overflow: auto;
-    text-align: center;
     background: black;
 }
 
@@ -59,11 +58,26 @@ html, body {
 
 /* canvases */
 
+#center_panel_controls {
+    text-align: center;
+}
+
+#image_canvas_panel {
+    overflow: auto;
+    text-align: center;
+}
+
 /* decorations */
+
+#region_preview {
+    display: flex;
+    flex-direction: column;
+}
 
 #image_list_container {
     display: flex;
     flex-direction: column;
+    min-height: 400px;
 }
 
 /* left menu elements */
