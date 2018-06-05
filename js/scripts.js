@@ -19,6 +19,31 @@ class RegionInfo {
         this.width = 0;
         this.height = 0;
     }
+
+    // normalize region
+    normalize() {
+        // horizontal normilize
+        if (this.width < 0) {
+            this.x = this.x + this.width;
+            this.width = -this.width;
+        }
+
+        // vertical normilize
+        if (this.height < 0) {
+            this.y = this.y + this.height;
+            this.height = -this.height;
+        }
+    }
+
+    // check intersection (regions MUST be normalized)
+    checkIntersection(region) {
+        if ((this.x <= region.x + region.width)  && (this.x + this.width  >= region.x) &&
+            (this.y <= region.y + region.height) && (this.y + this.height >= region.y)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 // ImageInfo
@@ -60,8 +85,6 @@ class ImageInfoListView {
         for (var i = 0; i < this.imageInfoList.length; i++)
             this.addItemInfoListItem(this.imageInfoList[i]);
     }
-
-    
 
     // addItemInfoListItem
     addItemInfoListItem(imageInfo) {
@@ -133,14 +156,22 @@ class ImageInfoViewer {
             // proceed selection
             if (imageInfoViewer.selectionStarted) {
                 var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
-                // craete region info 
-                var regionInfo = new RegionInfo();
-                regionInfo.color  = imageInfoViewer.selectionRegionInfo.color;
-                regionInfo.x      = imageInfoViewer.selectionRegionInfo.x;
-                regionInfo.y      = imageInfoViewer.selectionRegionInfo.y;
-                regionInfo.width  = imageInfoViewer.selectionRegionInfo.width;
-                regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
-                imageInfoViewer.imageInfo.regions.push(regionInfo);
+
+                if (imageInfoViewer.selectionMode === SelectionModeEnum.ADD) {
+                    // add new region info 
+                    var regionInfo = new RegionInfo();
+                    regionInfo.color  = imageInfoViewer.selectionRegionInfo.color;
+                    regionInfo.x      = imageInfoViewer.selectionRegionInfo.x;
+                    regionInfo.y      = imageInfoViewer.selectionRegionInfo.y;
+                    regionInfo.width  = imageInfoViewer.selectionRegionInfo.width;
+                    regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
+                    regionInfo.normalize();
+                    imageInfoViewer.imageInfo.regions.push(regionInfo);
+                } else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE) {
+                    // remove regions from list
+                    imageInfoViewer.selectionRegionInfo.normalize();
+                    imageInfoViewer.removeRegionsInArea(imageInfoViewer.selectionRegionInfo);
+                }
 
                 // redraw all stuff
                 imageInfoViewer.redraw();
@@ -160,13 +191,31 @@ class ImageInfoViewer {
             if (imageInfoViewer.imageInfo !== null) {
                 var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 imageInfoViewer.selectionStarted = true;
-                imageInfoViewer.selectionRegionInfo.color = generateRandomColor();
+                // check selection mode and set color
+                if (imageInfoViewer.selectionMode === SelectionModeEnum.ADD)
+                    imageInfoViewer.selectionRegionInfo.color = generateRandomColor();
+                else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE)
+                    imageInfoViewer.selectionRegionInfo.color = "#FF0000"
+                // set base coords
                 imageInfoViewer.selectionRegionInfo.x = mouseCoords.x;
                 imageInfoViewer.selectionRegionInfo.y = mouseCoords.y;
                 imageInfoViewer.selectionRegionInfo.width = 0;
                 imageInfoViewer.selectionRegionInfo.height = 0;
             }
         });
+    }
+
+    // remove regions from list by other region
+    removeRegionsInArea(area) {
+        area.normalize();
+        // this is temporary solution. There will be previews
+        for (var i = this.imageInfo.regions.length - 1; i >= 0; i--) {
+            var region = this.imageInfo.regions[i];
+            var intersected = region.checkIntersection(this.selectionRegionInfo);
+            if (intersected) {
+                this.imageInfo.regions.splice(i, 1);
+            }
+        }
     }
 
     // setImageInfo
@@ -201,6 +250,12 @@ class ImageInfoViewer {
             this.updateImageBuffer();
             //this.drawImageBuffer();
             //this.drawImageRegions();
+        }
+    }
+
+    setSelectionMode(selectionMode) {
+        if (this.selectionMode !== selectionMode) {
+            this.selectionMode = selectionMode;
         }
     }
 
@@ -262,7 +317,6 @@ class ImageInfoViewer {
 
             // update context
             ctx.putImageData(imageData, 0, 0);
-            console.log(imageData);
 
             // copy img
             this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
@@ -285,7 +339,7 @@ class ImageInfoViewer {
         if (this.imageInfo !== null) {
             for (var i = 0; i < this.imageInfo.regions.length; i++) {
                 var region = this.imageInfo.regions[i];
-                this.imageCanvasCtx.globalAlpha = 0.8;
+                this.imageCanvasCtx.globalAlpha = 0.5;
                 this.imageCanvasCtx.fillStyle = region.color;
                 this.imageCanvasCtx.fillRect(region.x, region.y, region.width, region.height);
                 this.imageCanvasCtx.globalAlpha = 1.0;
@@ -296,7 +350,12 @@ class ImageInfoViewer {
     // drawImageRegions
     drawSelectionRegion() {
         if (this.selectionStarted) {
-            this.imageCanvasCtx.globalAlpha = 0.85;
+            // check selection mode and set alpha
+            if (this.selectionMode === SelectionModeEnum.ADD) {
+                this.imageCanvasCtx.globalAlpha = 0.8;
+            } else if (this.selectionMode === SelectionModeEnum.REMOVE) {
+                this.imageCanvasCtx.globalAlpha = 0.85;
+            }
             this.imageCanvasCtx.fillStyle = this.selectionRegionInfo.color;
             this.imageCanvasCtx.fillRect(this.selectionRegionInfo.x, this.selectionRegionInfo.y, this.selectionRegionInfo.width, this.selectionRegionInfo.height);
             this.imageCanvasCtx.globalAlpha = 1.0;
@@ -380,6 +439,15 @@ var gImageRegionListViewer = new ImageRegionListViewer();
 // events
 //--------------------------------------------------------------------------
 
+// setection mode click
+function setectionModeClick() {
+    if (document.getElementById("rbSetectionModeAdd").checked) {
+        gImageInfoViewer.setSelectionMode(SelectionModeEnum.ADD);
+    } else {
+        gImageInfoViewer.setSelectionMode(SelectionModeEnum.REMOVE);
+    }
+}
+
 // color map type click
 function colorMapTypeClick() {
     if (document.getElementById("rbGrayScale").checked) {
@@ -460,7 +528,12 @@ function imageInfoRegionsSelectorUpdate() {
             imageInfoRegionsSelector.appendChild(imageInfoRegionsOption);
         }
         // set selected value
-        imageInfoRegionsSelector.value = selectedValue;
+        if ((selectedValue == "") && (gImageInfoList.length > 0)) {
+            imageInfoRegionsSelector.value = gImageInfoList[0];
+            gImageRegionListViewer.setImageInfo(gImageInfoList[imageInfoRegionsSelector.selectedIndex])
+        } else {
+            imageInfoRegionsSelector.value = selectedValue;
+        }
     }
 }
 
