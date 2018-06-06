@@ -24,15 +24,23 @@ class RegionInfo {
     normalize() {
         // horizontal normilize
         if (this.width < 0) {
-            this.x = this.x + this.width;
+            this.x += this.width;
             this.width = -this.width;
         }
 
         // vertical normilize
         if (this.height < 0) {
-            this.y = this.y + this.height;
+            this.y += this.height;
             this.height = -this.height;
         }
+    }
+
+    // scale region parameters
+    scale(factor) {
+        this.x *= factor;
+        this.y *= factor;
+        this.width *= factor;
+        this.height *= factor;
     }
 
     // check intersection (regions MUST be normalized)
@@ -95,8 +103,17 @@ class ImageInfoListView {
             item.onclick = imageInfoListItemClick;
             item.href = "#";
             item.imageInfo = imageInfo;
+            var descr = document.createElement("input");
+            descr.type = "text";
+            descr.imageInfo = imageInfo;
+            descr.value = imageInfo.descr;
+            descr.oninput = imageInfoDescriptionInput
+            var hr = document.createElement("hr");
+            hr.style.width = "100%";
             // append to list
             this.imageListContainer.appendChild(item);
+            this.imageListContainer.appendChild(descr);
+            this.imageListContainer.appendChild(hr);
         }
     }
 
@@ -166,10 +183,12 @@ class ImageInfoViewer {
                     regionInfo.width  = imageInfoViewer.selectionRegionInfo.width;
                     regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
                     regionInfo.normalize();
+                    regionInfo.scale(1.0/imageInfoViewer.scale);
                     imageInfoViewer.imageInfo.regions.push(regionInfo);
                 } else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE) {
                     // remove regions from list
                     imageInfoViewer.selectionRegionInfo.normalize();
+                    imageInfoViewer.selectionRegionInfo.scale(1/imageInfoViewer.scale);
                     imageInfoViewer.removeRegionsInArea(imageInfoViewer.selectionRegionInfo);
                 }
 
@@ -328,9 +347,9 @@ class ImageInfoViewer {
     drawImageBuffer() {
         // draw base image
         if (this.imageBuffer !== null) {
-            this.imageCanvas.width = this.imageBuffer.width;
-            this.imageCanvas.height = this.imageBuffer.height;
-            this.imageCanvasCtx.drawImage(this.imageBuffer, 0, 0);
+            this.imageCanvas.width = this.imageBuffer.width * this.scale;
+            this.imageCanvas.height = this.imageBuffer.height * this.scale;
+            this.imageCanvasCtx.drawImage(this.imageBuffer, 0, 0, this.imageCanvas.width, this.imageCanvas.height);
         }
     }
 
@@ -341,7 +360,7 @@ class ImageInfoViewer {
                 var region = this.imageInfo.regions[i];
                 this.imageCanvasCtx.globalAlpha = 0.5;
                 this.imageCanvasCtx.fillStyle = region.color;
-                this.imageCanvasCtx.fillRect(region.x, region.y, region.width, region.height);
+                this.imageCanvasCtx.fillRect(region.x * this.scale, region.y * this.scale, region.width * this.scale, region.height * this.scale);
                 this.imageCanvasCtx.globalAlpha = 1.0;
             }
         }
@@ -480,6 +499,13 @@ function loadImageBtnClick() {
 // image info list item click
 function imageInfoListItemClick(event) {
     gImageInfoViewer.setImageInfo(event.currentTarget.imageInfo);
+}
+
+// image info list item click
+function imageInfoDescriptionInput(event) {
+    if (event.currentTarget.imageInfo) {
+        event.currentTarget.imageInfo.descr = event.currentTarget.value;
+    }
 }
 
 // image info list item click

@@ -37,6 +37,7 @@ html, body {
     min-width: 300px;
     padding: 5px;
     border: 2px solid green;
+    overflow: auto;
 }
 
 .center-panel {
@@ -77,7 +78,7 @@ html, body {
 #image_list_container {
     display: flex;
     flex-direction: column;
-    min-height: 400px;
+    overflow: auto;
 }
 
 /* left menu elements */
