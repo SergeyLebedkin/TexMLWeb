@@ -35,6 +35,7 @@ html, body {
 
 .left-panel {
     min-width: 300px;
+    max-width: 300px;
     padding: 5px;
     border: 2px solid green;
     overflow: auto;
@@ -72,6 +73,11 @@ html, body {
 
 /* decorations */
 
+#imageNumberInput {
+    width: 100%;
+    font-size: 20px;
+}
+
 #scaleFactor {
     color: white;
 }
@@ -89,6 +95,10 @@ html, body {
     display: flex;
     flex-direction: column;
     overflow: auto;
+}
+
+#addTextureIDButton {
+    width: 100%;
 }
 
 /* left menu elements */
