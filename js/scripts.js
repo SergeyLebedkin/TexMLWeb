@@ -10,6 +10,14 @@ var SelectionModeEnum = {
     REMOVE: 2
 }
 
+class TextureID {
+    constructor(ID) {
+        this.ID = ID;
+        this.color = "red";
+        this.descr = "";
+    }
+}
+
 // RegionInfo
 class RegionInfo {
     constructor() {
@@ -59,7 +67,6 @@ class ImageInfo {
     constructor() {
         this.fileRef = null;
         this.image = null;
-        this.descr = "";
         this.regions = [];
     }
 
@@ -97,23 +104,17 @@ class ImageInfoListView {
     // addItemInfoListItem
     addItemInfoListItem(imageInfo) {
         if (imageInfo !== null) {
+            var div = document.createElement("div");
+            div.style = "display: flex; flex-direction: row; margin: 1px";
             // create new item
             var item = document.createElement("a");
             item.innerText = imageInfo.fileRef.name;
             item.onclick = imageInfoListItemClick;
             item.href = "#";
             item.imageInfo = imageInfo;
-            var descr = document.createElement("input");
-            descr.type = "text";
-            descr.imageInfo = imageInfo;
-            descr.value = imageInfo.descr;
-            descr.oninput = imageInfoDescriptionInput
-            var hr = document.createElement("hr");
-            hr.style.width = "100%";
             // append to list
-            this.imageListContainer.appendChild(item);
-            this.imageListContainer.appendChild(descr);
-            this.imageListContainer.appendChild(hr);
+            div.appendChild(item);
+            this.imageListContainer.appendChild(div);
         }
     }
 
@@ -440,7 +441,9 @@ class ImageRegionListViewer {
         for (var i = 0; i < this.imageInfo.regions.length; i++) {
             var region = this.imageInfo.regions[i];
             var a = document.createElement("a");
-            a.text = "(" + region.x + ";" + region.y + ")";
+            a.text = "(" +
+                " x:" + Math.trunc(region.x) +     "; y:" + Math.trunc(region.y) + 
+                " w:" + Math.trunc(region.width) + "; h:" + Math.trunc(region.height) + ")";
             this.regionListContainer.appendChild(a);
         }
         // TODO: JUST DRAW region list (as internal canvases)
@@ -499,13 +502,7 @@ function loadImageBtnClick() {
 // image info list item click
 function imageInfoListItemClick(event) {
     gImageInfoViewer.setImageInfo(event.currentTarget.imageInfo);
-}
-
-// image info list item click
-function imageInfoDescriptionInput(event) {
-    if (event.currentTarget.imageInfo) {
-        event.currentTarget.imageInfo.descr = event.currentTarget.value;
-    }
+    currentImageInfoText.text = event.currentTarget.imageInfo.fileRef.name;
 }
 
 // image info list item click
@@ -517,11 +514,13 @@ function onchangeImageInfo(imageInfo) {
 // scale down bnt click
 function scaleDownBntClick(event) {
     gImageInfoViewer.setScale(gImageInfoViewer.scale/2);
+    scaleFactor.innerText = Math.round(gImageInfoViewer.scale*100) + "%";
 }
 
 // scale up bnt click
 function scaleUpBtnClick(event) {
     gImageInfoViewer.setScale(gImageInfoViewer.scale*2);
+    scaleFactor.innerText = Math.round(gImageInfoViewer.scale*100) + "%";
 }
 
 

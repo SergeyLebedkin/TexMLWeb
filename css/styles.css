@@ -59,8 +59,10 @@ html, body {
 
 /* canvases */
 
-#center_panel_controls {
+#center_panel {
     text-align: center;
+    display: flex;
+    flex-direction: column;
 }
 
 #image_canvas_panel {
@@ -69,6 +71,14 @@ html, body {
 }
 
 /* decorations */
+
+#scaleFactor {
+    color: white;
+}
+
+#currentImageInfoText {
+    color: white;
+}
 
 #region_preview {
     display: flex;
