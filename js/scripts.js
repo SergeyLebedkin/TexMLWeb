@@ -546,15 +546,26 @@ class ImageRegionViewer {
 
     // addRegionInfoItem
     appendRegionInfoItem(imageInfo, regionInfo) {
+        // get ratio
+        var ratio = regionInfo.width/regionInfo.height;
+        var canvas_width = Math.min(regionInfo.width, 250);
+        var canvas_height = canvas_width/ratio;
         // create canvas
         var canvas = document.createElement('canvas');
-        canvas.width = regionInfo.width;
-        canvas.height = regionInfo.height;
+        canvas.width = canvas_width;
+        canvas.height = canvas_height;
+        canvas.style.maxWidth = canvas_width;
+        canvas.style.maxHeight = canvas_height;
         canvas.style.padding = "5px";
 
         // get context and draw original image
         var ctx = canvas.getContext('2d');
-        ctx.drawImage(imageInfo.image, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(imageInfo.image,
+            regionInfo.x, regionInfo.y,
+            regionInfo.width, regionInfo.height,
+            0, 0,
+            canvas.width, canvas.height
+        );
 
         // calculate image buffer - JIT
         if (this.colorMapType == ColorMapTypeEnum.JIT) {
@@ -644,9 +655,10 @@ function loadImageBtnClick() {
                 gImageInfoList.push(imageInfo);
             }
             imageInfoRegionsSelectorUpdate();
+            selectImageNumberUpdate();
             // image number input
-            if (gImageInfoList.length > 0)
-                imageNumberInput.max = gImageInfoList.length - 1;
+            //if (gImageInfoList.length > 0)
+            //    imageNumberInput.max = gImageInfoList.length - 1;
         }
         invisible_file_input.click();
     }
@@ -674,9 +686,13 @@ function scaleUpBtnClick(event) {
     scaleFactor.innerText = Math.round(gImageInfoViewer.scale * 100) + "%";
 }
 
-// image number input change
-function imageNumberInputChange(event) {
-    gImageInfoViewer.setImageInfo(gImageInfoList[imageNumberInput.value]);
+// // image number input change
+// function imageNumberInputChange(event) {
+//     gImageInfoViewer.setImageInfo(gImageInfoList[imageNumberInput.value]);
+// }
+
+function selectImageNumberChange(event) {
+    gImageInfoViewer.setImageInfo(gImageInfoList[selectImageNumber.selectedIndex]);
 }
 
 // image info regions selector change
@@ -728,6 +744,29 @@ function imageInfoRegionsSelectorUpdate() {
         } else {
             imageInfoRegionsSelector.selectedIndex = selectedIndex;
         }
+    }
+}
+
+// selectImageNumberUpdate
+function selectImageNumberUpdate() {
+    if (imageInfoRegionsSelector) {
+        // get selected index
+        var selectedIndex = selectImageNumber.selectedIndex;
+
+        // clear childs
+        while (selectImageNumber.firstChild) { selectImageNumber.removeChild(selectImageNumber.firstChild); }
+
+        // add items
+        for (var i = 0; i < gImageInfoList.length; i++) {
+            // create new selector
+            var imageIDOption = document.createElement('option');
+            imageIDOption.value = gImageInfoList[i];
+            imageIDOption.innerHTML = gImageInfoList[i].fileRef.name;
+            selectImageNumber.appendChild(imageIDOption);
+        }
+
+        // set selected index
+        selectImageNumber.selectedIndex = selectedIndex;
     }
 }
 
