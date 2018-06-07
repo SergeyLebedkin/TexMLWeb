@@ -23,6 +23,7 @@ class TextureID {
 class RegionInfo {
     constructor() {
         this.color = "red";
+        this.ID = "";
         this.x = 0;
         this.y = 0;
         this.width = 0;
@@ -53,13 +54,33 @@ class RegionInfo {
     }
 
     // check intersection (regions MUST be normalized)
-    checkIntersection(region) {
-        if ((this.x <= region.x + region.width)  && (this.x + this.width  >= region.x) &&
-            (this.y <= region.y + region.height) && (this.y + this.height >= region.y)) {
+    checkIntersectionRegion(region) {
+        return this.checkIntersection(region.x, region.y, region.width, region.height);
+    }
+
+    // check intersection (regions MUST be normalized)
+    checkIntersection(x, y, w, h) {
+        if ((this.x <= x + w) && (this.x + this.width >= x) &&
+            (this.y <= y + h) && (this.y + this.height >= y)) {
             return true;
         } else {
             return false;
         }
+    }
+
+    // trim (regions MUST be normalized)
+    trim(x0, y0, x1, y1) {
+        // calc resulting coords
+        var result_x0 = Math.max(x0, this.x);
+        var result_y0 = Math.max(y0, this.y);
+        var result_x1 = Math.min(x1, this.x + this.width - 1);
+        var result_y1 = Math.min(y1, this.y + this.height - 1);
+
+        // update fields
+        this.x = result_x0;
+        this.y = result_y0;
+        this.width = result_x1 - result_x0;
+        this.height = result_y1 - result_y0;
     }
 }
 
@@ -87,6 +108,7 @@ class ImageInfo {
 class TextureIDListView {
     constructor(textureIDList) {
         this.textureIDList = textureIDList;
+        this.onchange = null;
         // get controls
         this.textureIDListContainer = document.getElementById("texture_id_list_container");
     }
@@ -95,17 +117,33 @@ class TextureIDListView {
     update() {
         // get checked textureID
         var textureID = this.findCheckedTextureID();
-        
+
         // just clear
         this.clear();
 
         // add new items
         for (var i = 0; i < this.textureIDList.length; i++)
-            this.addItemInfoListItem(this.textureIDList[i]);
+            this.addTextureIDItem(this.textureIDList[i]);
 
         // check first textureID not cheked
-        if ((!textureID) && (this.textureIDList.length))
+        if (textureID) {
+            this.checkByTextureID(textureID);
+        }
+        else if ((!textureID) && (this.textureIDList.length > 0))
             document.getElementsByName('textureID')[0].checked = true;
+    }
+
+    // find checked texture ID
+    checkByTextureID(textureID) {
+        if (textureID) {
+            var radios = document.getElementsByName('textureID');
+            for (var i = 0, length = radios.length; i < length; i++) {
+                if (radios[i].textureID == textureID) {
+                    radios[i].checked = true;
+                    return;
+                }
+            }
+        }
     }
 
     // find checked texture ID
@@ -120,7 +158,7 @@ class TextureIDListView {
     }
 
     // addItemInfoListItem
-    addItemInfoListItem(textureID) {
+    addTextureIDItem(textureID) {
         if (textureID !== null) {
             var div = document.createElement("div");
             div.style = "display: flex; flex-direction: row";
@@ -129,6 +167,7 @@ class TextureIDListView {
             radio.type = "radio";
             radio.name = "textureID";
             radio.textureID = textureID;
+            radio.onchange = textureIDSelected;
             radio.style.background = textureID.color;
             div.appendChild(radio);
             // create ID label
@@ -144,9 +183,14 @@ class TextureIDListView {
             div.appendChild(name);
             // create descr
             var descr = document.createElement("input");
-            descr.type = "texts";
+            descr.type = "text";
+            descr.text = textureID.descr;
             descr.style.width = "100%";
             descr.textureID = textureID;
+            descr.oninput = function (event) {
+                event.target.textureID.name = event.target.value;
+                imageInfoRegionsSelectorUpdate();
+            }
             div.appendChild(descr);
             // append to list
             this.textureIDListContainer.appendChild(div);
@@ -178,6 +222,7 @@ class ImageInfoViewer {
         this.selectionMode = SelectionModeEnum.ADD;
         this.selectionRegionInfo = new RegionInfo();
         this.onchange = null;
+        this.textureID = null;
 
         // create controls
         this.parent = parent;
@@ -212,21 +257,26 @@ class ImageInfoViewer {
             if (imageInfoViewer.selectionStarted) {
                 var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
 
+                // celection region normalize and scale
+                imageInfoViewer.selectionRegionInfo.normalize();
+                imageInfoViewer.selectionRegionInfo.scale(1.0 / imageInfoViewer.scale);
+
+                // add regions from list
                 if (imageInfoViewer.selectionMode === SelectionModeEnum.ADD) {
-                    // add new region info 
-                    var regionInfo = new RegionInfo();
-                    regionInfo.color  = imageInfoViewer.selectionRegionInfo.color;
-                    regionInfo.x      = imageInfoViewer.selectionRegionInfo.x;
-                    regionInfo.y      = imageInfoViewer.selectionRegionInfo.y;
-                    regionInfo.width  = imageInfoViewer.selectionRegionInfo.width;
-                    regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
-                    regionInfo.normalize();
-                    regionInfo.scale(1.0/imageInfoViewer.scale);
-                    imageInfoViewer.imageInfo.regions.push(regionInfo);
+                    if (imageInfoViewer.isRegionInfoInside(imageInfoViewer.selectionRegionInfo)) {
+                        // add new region info 
+                        var regionInfo = new RegionInfo();
+                        regionInfo.color = imageInfoViewer.selectionRegionInfo.color;
+                        regionInfo.ID = imageInfoViewer.selectionRegionInfo.ID;
+                        regionInfo.x = imageInfoViewer.selectionRegionInfo.x;
+                        regionInfo.y = imageInfoViewer.selectionRegionInfo.y;
+                        regionInfo.width = imageInfoViewer.selectionRegionInfo.width;
+                        regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
+                        regionInfo.trim(0, 0, imageInfoViewer.imageBuffer.width, imageInfoViewer.imageBuffer.height);
+                        imageInfoViewer.imageInfo.regions.push(regionInfo);
+                    }
                 } else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE) {
                     // remove regions from list
-                    imageInfoViewer.selectionRegionInfo.normalize();
-                    imageInfoViewer.selectionRegionInfo.scale(1/imageInfoViewer.scale);
                     imageInfoViewer.removeRegionsInArea(imageInfoViewer.selectionRegionInfo);
                 }
 
@@ -249,10 +299,12 @@ class ImageInfoViewer {
                 var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 imageInfoViewer.selectionStarted = true;
                 // check selection mode and set color
-                if (imageInfoViewer.selectionMode === SelectionModeEnum.ADD)
-                    imageInfoViewer.selectionRegionInfo.color = generateRandomColor();
-                else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE)
-                    imageInfoViewer.selectionRegionInfo.color = "#FF0000"
+                if (imageInfoViewer.selectionMode === SelectionModeEnum.ADD) {
+                    imageInfoViewer.selectionRegionInfo.color = imageInfoViewer.textureID.color;
+                    imageInfoViewer.selectionRegionInfo.ID = imageInfoViewer.textureID.ID;
+                } else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE) {
+                    imageInfoViewer.selectionRegionInfo.color = "#FF0000";
+                }
                 // set base coords
                 imageInfoViewer.selectionRegionInfo.x = mouseCoords.x;
                 imageInfoViewer.selectionRegionInfo.y = mouseCoords.y;
@@ -262,13 +314,21 @@ class ImageInfoViewer {
         });
     }
 
+    // is region info inside
+    isRegionInfoInside(regionInfo) {
+        if (this.imageBuffer) {
+            return regionInfo.checkIntersection(0, 0, this.imageBuffer.width, this.imageBuffer.height);
+        }
+        return false;
+    }
+
     // remove regions from list by other region
     removeRegionsInArea(area) {
         area.normalize();
         // this is temporary solution. There will be previews
         for (var i = this.imageInfo.regions.length - 1; i >= 0; i--) {
             var region = this.imageInfo.regions[i];
-            var intersected = region.checkIntersection(this.selectionRegionInfo);
+            var intersected = region.checkIntersectionRegion(this.selectionRegionInfo);
             if (intersected) {
                 this.imageInfo.regions.splice(i, 1);
             }
@@ -333,33 +393,17 @@ class ImageInfoViewer {
         if (this.imageInfo === null)
             return;
 
-        // calculate image buffer - gray scale 
-        if (this.colorMapType == ColorMapTypeEnum.GRAY_SCALE) {
-            // create canvas
-            var canvas = document.createElement('canvas');
-            canvas.width = this.imageInfo.image.width;
-            canvas.height = this.imageInfo.image.height;
+        // create canvas
+        var canvas = document.createElement('canvas');
+        canvas.width = this.imageInfo.image.width;
+        canvas.height = this.imageInfo.image.height;
 
-            // get context and draw original image
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(this.imageInfo.image, 0, 0);
-
-            // copy img
-            this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
-            this.imageBuffer.src = canvas.toDataURL("image/png");
-        }
+        // get context and draw original image
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(this.imageInfo.image, 0, 0);
 
         // calculate image buffer - JIT
         if (this.colorMapType == ColorMapTypeEnum.JIT) {
-            // create canvas
-            var canvas = document.createElement('canvas');
-            canvas.width = this.imageInfo.image.width;
-            canvas.height = this.imageInfo.image.height;
-
-            // get context and draw original image
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(this.imageInfo.image, 0, 0);
-
             // get image data
             var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -374,11 +418,11 @@ class ImageInfoViewer {
 
             // update context
             ctx.putImageData(imageData, 0, 0);
-
-            // copy img
-            this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
-            this.imageBuffer.src = canvas.toDataURL("image/png");
         }
+
+        // copy img
+        this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
+        this.imageBuffer.src = canvas.toDataURL("image/png");
     }
 
     // drawImageBuffer
@@ -434,23 +478,25 @@ class ImageInfoViewer {
 }
 
 // ImageRegionViewer
-class ImageRegionListViewer {
-    constructor() {
-        this.imageInfo = null;
+class ImageRegionViewer {
+    constructor(imageInfoList) {
+        this.imageInfoList = imageInfoList;
+        this.textureID = null;
+        this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
         // get controls
         this.regionListContainer = document.getElementById("region_preview");
     }
 
-    // setImageInfo
-    setImageInfo(imageInfo) {
+    // setTextureID
+    setTextureID(textureID) {
         // check for same image info
-        if (this.imageInfo === imageInfo) {
+        if (this.textureID === textureID) {
             return;
         }
 
         // setup new image info
-        if (this.imageInfo != imageInfo) {
-            this.imageInfo = imageInfo;
+        if (this.textureID != textureID) {
+            this.textureID = textureID;
             this.drawRegionList();
         }
     }
@@ -465,25 +511,71 @@ class ImageRegionListViewer {
         }
     }
 
+    // setColorMapType
+    // NOTE: This is async function
+    setColorMapType(colorMapType) {
+        if (this.colorMapType !== colorMapType) {
+            this.colorMapType = colorMapType;
+            this.drawRegionList();
+        }
+    }
+
     // drawRegions
     drawRegionList() {
         // clear data
         this.clear();
 
         // check for null
-        if (this.imageInfo === null)
+        if (this.textureID === null)
             return;
 
         // this is temporary solution. There will be previews
-        for (var i = 0; i < this.imageInfo.regions.length; i++) {
-            var region = this.imageInfo.regions[i];
-            var a = document.createElement("a");
-            a.text = "(" +
-                " x:" + Math.trunc(region.x) +     "; y:" + Math.trunc(region.y) + 
-                " w:" + Math.trunc(region.width) + "; h:" + Math.trunc(region.height) + ")";
-            this.regionListContainer.appendChild(a);
+        for (var i = 0; i < this.imageInfoList.length; i++) {
+            // get image info
+            var imageInfo = this.imageInfoList[i];
+            for (var j = 0; j < imageInfo.regions.length; j++) {
+                // get region info
+                var regionInfo = imageInfo.regions[j];
+                if (regionInfo.ID === this.textureID.ID) {
+                    this.appendRegionInfoItem(imageInfo, regionInfo)
+                }
+            }
         }
         // TODO: JUST DRAW region list (as internal canvases)
+    }
+
+    // addRegionInfoItem
+    appendRegionInfoItem(imageInfo, regionInfo) {
+        // create canvas
+        var canvas = document.createElement('canvas');
+        canvas.width = regionInfo.width;
+        canvas.height = regionInfo.height;
+        canvas.style.padding = "5px";
+
+        // get context and draw original image
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(imageInfo.image, 0, 0, canvas.width, canvas.height);
+
+        // calculate image buffer - JIT
+        if (this.colorMapType == ColorMapTypeEnum.JIT) {
+            // get image data
+            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            // update image data
+            for (var i = 0; i < imageData.data.length; i += 4) {
+                var color = grayscaleToJit(imageData.data[i + 1]); // get green value
+                imageData.data[i + 0] = color.r * 255;
+                imageData.data[i + 1] = color.g * 255;
+                imageData.data[i + 2] = color.b * 255;
+                imageData.data[i + 3] = 255;
+            }
+
+            // update context
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // append new canvas
+        this.regionListContainer.appendChild(canvas);
     }
 }
 
@@ -509,8 +601,10 @@ var gTextureIDList = [
 var gTextureIDListView = new TextureIDListView(gTextureIDList);
 gTextureIDListView.update();
 var gImageInfoViewer = new ImageInfoViewer(image_canvas_panel);
+gImageInfoViewer.textureID = gTextureIDList[0];
 gImageInfoViewer.onchange = imageInfoChange;
-var gImageRegionListViewer = new ImageRegionListViewer();
+var gImageRegionListViewer = new ImageRegionViewer(gImageInfoList);
+imageInfoRegionsSelectorUpdate();
 
 //--------------------------------------------------------------------------
 // events
@@ -529,8 +623,10 @@ function setectionModeClick() {
 function colorMapTypeClick() {
     if (document.getElementById("rbGrayScale").checked) {
         gImageInfoViewer.setColorMapType(ColorMapTypeEnum.GRAY_SCALE);
+        gImageRegionListViewer.setColorMapType(ColorMapTypeEnum.GRAY_SCALE);
     } else {
         gImageInfoViewer.setColorMapType(ColorMapTypeEnum.JIT);
+        gImageRegionListViewer.setColorMapType(ColorMapTypeEnum.JIT);
     }
 }
 
@@ -548,6 +644,9 @@ function loadImageBtnClick() {
                 gImageInfoList.push(imageInfo);
             }
             imageInfoRegionsSelectorUpdate();
+            // image number input
+            if (gImageInfoList.length > 0)
+                imageNumberInput.max = gImageInfoList.length - 1;
         }
         invisible_file_input.click();
     }
@@ -560,31 +659,43 @@ function imageInfoListItemClick(event) {
 
 // image info list item click
 function imageInfoChange(imageInfo) {
-    if (gImageRegionListViewer.imageInfo === imageInfo)
-        gImageRegionListViewer.drawRegionList();
+    gImageRegionListViewer.drawRegionList();
 }
 
 // scale down bnt click
 function scaleDownBntClick(event) {
-    gImageInfoViewer.setScale(gImageInfoViewer.scale/2);
-    scaleFactor.innerText = Math.round(gImageInfoViewer.scale*100) + "%";
+    gImageInfoViewer.setScale(gImageInfoViewer.scale / 2);
+    scaleFactor.innerText = Math.round(gImageInfoViewer.scale * 100) + "%";
 }
 
 // scale up bnt click
 function scaleUpBtnClick(event) {
-    gImageInfoViewer.setScale(gImageInfoViewer.scale*2);
-    scaleFactor.innerText = Math.round(gImageInfoViewer.scale*100) + "%";
+    gImageInfoViewer.setScale(gImageInfoViewer.scale * 2);
+    scaleFactor.innerText = Math.round(gImageInfoViewer.scale * 100) + "%";
 }
 
 // image number input change
 function imageNumberInputChange(event) {
     gImageInfoViewer.setImageInfo(gImageInfoList[imageNumberInput.value]);
-    console.log(imageNumberInput.value);
 }
 
 // image info regions selector change
 function imageInfoRegionsSelectorChange(event) {
-    gImageRegionListViewer.setImageInfo(gImageInfoList[imageInfoRegionsSelector.selectedIndex]);
+    gImageRegionListViewer.setTextureID(gTextureIDList[imageInfoRegionsSelector.selectedIndex]);
+}
+
+// add texture ID button click
+function addTextureIDButtonClick(event) {
+    var id = nextChar(gTextureIDList[gTextureIDList.length - 1].ID);
+    var color = generateRandomColor();
+    gTextureIDList.push(new TextureID(id, color));
+    gTextureIDListView.update();
+    imageInfoRegionsSelectorUpdate();
+}
+
+// texture I sSelected
+function textureIDSelected(event) {
+    gImageInfoViewer.textureID = event.target.textureID;
 }
 
 //--------------------------------------------------------------------------
@@ -595,7 +706,7 @@ function imageInfoRegionsSelectorChange(event) {
 function imageInfoRegionsSelectorUpdate() {
     if (imageInfoRegionsSelector) {
         // store selected value
-        var selectedValue = imageInfoRegionsSelector.value;
+        var selectedIndex = imageInfoRegionsSelector.selectedIndex;
         // clear childs
         while (imageInfoRegionsSelector.firstChild) {
             imageInfoRegionsSelector.removeChild(
@@ -603,19 +714,19 @@ function imageInfoRegionsSelectorUpdate() {
             );
         }
         // add items
-        for (var i = 0; i < gImageInfoList.length; i++) {
+        for (var i = 0; i < gTextureIDList.length; i++) {
             // create new selector
-            var imageInfoRegionsOption = document.createElement('option');
-            imageInfoRegionsOption.value = gImageInfoList[i];
-            imageInfoRegionsOption.innerHTML = gImageInfoList[i].fileRef.name;
-            imageInfoRegionsSelector.appendChild(imageInfoRegionsOption);
+            var textureIDOption = document.createElement('option');
+            textureIDOption.value = gTextureIDList[i];
+            textureIDOption.innerHTML = gTextureIDList[i].ID + ": " + gTextureIDList[i].name;
+            imageInfoRegionsSelector.appendChild(textureIDOption);
         }
         // set selected value
-        if ((selectedValue == "") && (gImageInfoList.length > 0)) {
-            imageInfoRegionsSelector.value = gImageInfoList[0];
-            gImageRegionListViewer.setImageInfo(gImageInfoList[imageInfoRegionsSelector.selectedIndex])
+        if ((selectedIndex < 0) && (gTextureIDList.length > 0)) {
+            imageInfoRegionsSelector.value = gTextureIDList[0];
+            gImageRegionListViewer.setTextureID(gTextureIDList[imageInfoRegionsSelector.selectedIndex])
         } else {
-            imageInfoRegionsSelector.value = selectedValue;
+            imageInfoRegionsSelector.selectedIndex = selectedIndex;
         }
     }
 }
@@ -652,4 +763,9 @@ function generateRandomColor() {
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+}
+
+// next char
+function nextChar(c) {
+    return String.fromCharCode(c.charCodeAt(0) + 1);
 }

@@ -86,9 +86,15 @@ html, body {
     color: white;
 }
 
+#imageInfoRegionsSelector {
+    min-height: 30px;
+}
+
 #region_preview {
     display: flex;
     flex-direction: column;
+    padding: 5px;
+    overflow: auto;
 }
 
 #image_list_container {
