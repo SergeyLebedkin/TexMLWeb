@@ -585,8 +585,19 @@ class ImageRegionViewer {
             ctx.putImageData(imageData, 0, 0);
         }
 
+        // add label
+        var label = document.createElement('a');
+        label.innerText = imageInfo.fileRef.name;
+        this.regionListContainer.appendChild(label);
+
         // append new canvas
         this.regionListContainer.appendChild(canvas);
+
+        // create break
+        this.regionListContainer.appendChild(
+            document.createElement('br')
+        );
+        
     }
 }
 
@@ -709,9 +720,34 @@ function addTextureIDButtonClick(event) {
     imageInfoRegionsSelectorUpdate();
 }
 
-// texture I sSelected
+// texture Is Selected
 function textureIDSelected(event) {
     gImageInfoViewer.textureID = event.target.textureID;
+}
+
+// submit click
+function  submitClick(event) {
+    var regionsString = '';
+    for (var i = 0; i < gImageInfoList.length; i++) {
+        var imageInfo = gImageInfoList[i];
+        for (var j = 0; j < imageInfo.regions.length; j++) {
+            var imageRegion = imageInfo.regions[j];
+            console.log(imageInfo.fileRef.mozFullPath);
+            regionsString += 
+                imageInfo.fileRef.name + ", " +
+                imageRegion.x + ", " + 
+                imageRegion.y + ", " + 
+                "1, " + 
+                (imageRegion.x + imageRegion.width) + ", " + 
+                (imageRegion.y + imageRegion.height) + ", " + 
+                "1, " + 
+                imageRegion.ID + ", " +
+                gTextureIDList.find(textureID => textureID.ID === imageRegion.ID).name + "\r\n";
+            ;
+        }
+    }
+    
+    downloadFile(regionsString, 'regions.txt', 'text/plain');
 }
 
 //--------------------------------------------------------------------------
@@ -768,6 +804,14 @@ function selectImageNumberUpdate() {
         // set selected index
         selectImageNumber.selectedIndex = selectedIndex;
     }
+}
+
+function downloadFile(text, name, type) {
+    var a = document.createElement("a");
+    var file = new Blob([text], {type: type});
+    a.href = URL.createObjectURL(file);
+    a.download = name;
+    a.click();
 }
 
 // gray scale to JIT
