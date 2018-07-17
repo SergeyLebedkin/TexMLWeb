@@ -36,6 +36,14 @@
                     <input onclick="colorMapTypeClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
                     <label>JIT</label>
                 </div>
+                <!-- Region source switcher -->
+                <div>
+                    <a>Regions:</a>
+                    <input onclick="regionSourceClick()" type="radio" id="rbManual" name="regionSource" value="Manual" checked>
+                    <label>Created</label>
+                    <input onclick="regionSourceClick()" type="radio" id="rbLoaded" name="regionSource" value="Loaded">
+                    <label>Loaded</label>
+                </div>
             </div>
             <!-- 2b. Assign Visual Signature -->
             <div class="menu-item-title">2b. Assign Visual Signature</div>
@@ -58,6 +66,12 @@
             <div class="menu-item-title">3. Submit</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="submitClick()">Submit</button>
+            </div>
+            <!-- Load  -->
+            <div class="menu-item-title">4. Load regions</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="loadRegionsClick()">Load regions</button>
+                <input type="file" id="invisible_text_file_input" name="files[]" style="display:none">
             </div>
         </div>
         <div class="center-panel" id="center_panel">

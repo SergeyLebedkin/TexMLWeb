@@ -10,6 +10,12 @@ var SelectionModeEnum = {
     REMOVE: 2
 }
 
+// RegionInfoSourceEnum
+var RegionInfoSourceEnum = {
+    MANUAL: 1,
+    LOADED: 2
+}
+
 // TextureID
 class TextureID {
     constructor(ID, color = "red") {
@@ -28,6 +34,7 @@ class RegionInfo {
         this.y = 0;
         this.width = 0;
         this.height = 0;
+        this.source = RegionInfoSourceEnum.MANUAL;
     }
 
     // normalize region
@@ -220,6 +227,7 @@ class ImageInfoViewer {
         this.scale = 1.0;
         this.selectionStarted = false;
         this.selectionMode = SelectionModeEnum.ADD;
+        this.source = RegionInfoSourceEnum.MANUAL;
         this.selectionRegionInfo = new RegionInfo();
         this.onchange = null;
         this.textureID = null;
@@ -310,7 +318,7 @@ class ImageInfoViewer {
                 imageInfoViewer.selectionRegionInfo.y = mouseCoords.y;
                 imageInfoViewer.selectionRegionInfo.width = 0;
                 imageInfoViewer.selectionRegionInfo.height = 0;
-            }
+            };
         });
     }
 
@@ -386,6 +394,15 @@ class ImageInfoViewer {
         }
     }
 
+    // setColorMapType
+    // NOTE: This is async function
+    setSource(source) {
+        if (this.source !== source) {
+            this.source = source;
+            this.updateImageBuffer();
+        }
+    }
+
     // updateImageCache
     // NOTE: This is async function
     updateImageBuffer() {
@@ -438,12 +455,15 @@ class ImageInfoViewer {
     // drawImageRegions
     drawImageRegions() {
         if (this.imageInfo !== null) {
+            console.log(this.imageInfo.regions.length);
             for (var i = 0; i < this.imageInfo.regions.length; i++) {
                 var region = this.imageInfo.regions[i];
-                this.imageCanvasCtx.globalAlpha = 0.5;
-                this.imageCanvasCtx.fillStyle = region.color;
-                this.imageCanvasCtx.fillRect(region.x * this.scale, region.y * this.scale, region.width * this.scale, region.height * this.scale);
-                this.imageCanvasCtx.globalAlpha = 1.0;
+                if (region.source === this.source) {
+                    this.imageCanvasCtx.globalAlpha = 0.5;
+                    this.imageCanvasCtx.fillStyle = region.color;
+                    this.imageCanvasCtx.fillRect(region.x * this.scale, region.y * this.scale, region.width * this.scale, region.height * this.scale);
+                    this.imageCanvasCtx.globalAlpha = 1.0;
+                }
             }
         }
     }
@@ -483,6 +503,8 @@ class ImageRegionViewer {
         this.imageInfoList = imageInfoList;
         this.textureID = null;
         this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
+        this.source = RegionInfoSourceEnum.MANUAL;
+        
         // get controls
         this.regionListContainer = document.getElementById("region_preview");
     }
@@ -520,6 +542,15 @@ class ImageRegionViewer {
         }
     }
 
+    // setColorMapType
+    // NOTE: This is async function
+    setSource(source) {
+        if (this.source !== source) {
+            this.source = source;
+            this.drawRegionList();
+        }
+    }
+
     // drawRegions
     drawRegionList() {
         // clear data
@@ -536,7 +567,8 @@ class ImageRegionViewer {
             for (var j = 0; j < imageInfo.regions.length; j++) {
                 // get region info
                 var regionInfo = imageInfo.regions[j];
-                if (regionInfo.ID === this.textureID.ID) {
+                if ((regionInfo.ID === this.textureID.ID) &&
+                    (regionInfo.source === this.source)) {
                     this.appendRegionInfoItem(imageInfo, regionInfo)
                 }
             }
@@ -547,9 +579,9 @@ class ImageRegionViewer {
     // addRegionInfoItem
     appendRegionInfoItem(imageInfo, regionInfo) {
         // get ratio
-        var ratio = regionInfo.width/regionInfo.height;
+        var ratio = regionInfo.width / regionInfo.height;
         var canvas_width = Math.min(regionInfo.width, 250);
-        var canvas_height = canvas_width/ratio;
+        var canvas_height = canvas_width / ratio;
         // create canvas
         var canvas = document.createElement('canvas');
         canvas.width = canvas_width;
@@ -597,7 +629,7 @@ class ImageRegionViewer {
         this.regionListContainer.appendChild(
             document.createElement('br')
         );
-        
+
     }
 }
 
@@ -649,6 +681,17 @@ function colorMapTypeClick() {
     } else {
         gImageInfoViewer.setColorMapType(ColorMapTypeEnum.JIT);
         gImageRegionListViewer.setColorMapType(ColorMapTypeEnum.JIT);
+    }
+}
+
+// color map type click
+function regionSourceClick() {
+    if (document.getElementById("rbManual").checked) {
+        gImageInfoViewer.setSource(RegionInfoSourceEnum.MANUAL);
+        gImageRegionListViewer.setSource(RegionInfoSourceEnum.MANUAL);
+    } else {
+        gImageInfoViewer.setSource(RegionInfoSourceEnum.LOADED);
+        gImageRegionListViewer.setSource(RegionInfoSourceEnum.LOADED);
     }
 }
 
@@ -726,28 +769,87 @@ function textureIDSelected(event) {
 }
 
 // submit click
-function  submitClick(event) {
+function submitClick(event) {
     var regionsString = '';
     for (var i = 0; i < gImageInfoList.length; i++) {
         var imageInfo = gImageInfoList[i];
         for (var j = 0; j < imageInfo.regions.length; j++) {
             var imageRegion = imageInfo.regions[j];
             console.log(imageInfo.fileRef.mozFullPath);
-            regionsString += 
+            regionsString +=
                 imageInfo.fileRef.name + ", " +
-                imageRegion.x + ", " + 
-                imageRegion.y + ", " + 
-                "1, " + 
-                (imageRegion.x + imageRegion.width) + ", " + 
-                (imageRegion.y + imageRegion.height) + ", " + 
-                "1, " + 
+                imageRegion.x + ", " +
+                imageRegion.y + ", " +
+                "1, " +
+                (imageRegion.x + imageRegion.width) + ", " +
+                (imageRegion.y + imageRegion.height) + ", " +
+                "1, " +
                 imageRegion.ID + ", " +
                 gTextureIDList.find(textureID => textureID.ID === imageRegion.ID).name + "\r\n";
             ;
         }
     }
-    
+
     downloadFile(regionsString, 'regions.txt', 'text/plain');
+}
+
+// load regions click
+function loadRegionsClick(event) {
+    if (invisible_text_file_input) {
+        invisible_text_file_input.accept = '.txt';
+        invisible_text_file_input.onchange = function (event) {
+            for (var i = 0; i < event.currentTarget.files.length; i++) {
+                parceRegionFile(event.currentTarget.files[i]);
+            }
+        }
+        invisible_text_file_input.click();
+    }
+}
+
+// parce text file
+function parceRegionFile(f) {
+    // parce text file
+    var r = new FileReader();
+    r.onload = function (e) {
+        var strings = e.target.result.split('\n').forEach(
+            str => parceRegionString(str)
+        );
+        gImageInfoViewer.redraw();
+        gImageRegionListViewer.drawRegionList();
+    }
+    r.readAsText(f);
+}
+
+// parce region string
+function parceRegionString(s) {
+    // chech for empty string
+    if (s.length === 0) return;
+    var params = s.split(',');
+    params = params.map(param => param.trim());
+
+    // add region to image info
+    gImageInfoList.forEach(imageInfo => {
+        if (imageInfo.fileRef.name === params[0]) {
+            // add new region info 
+            var regionInfo = new RegionInfo();
+            var textureID = findOrDefaultTextureID(params[7]);
+            regionInfo.ID = textureID.ID;
+            regionInfo.color = textureID.color;
+            regionInfo.x = params[1];
+            regionInfo.y = params[2];
+            regionInfo.width = params[4] - params[1];
+            regionInfo.height = params[5] - params[2];
+            regionInfo.source = RegionInfoSourceEnum.LOADED;
+            imageInfo.regions.push(regionInfo);
+        }
+    });
+}
+
+function findOrDefaultTextureID(textureID) {
+    for (var i = 0; i < gTextureIDList.length; i++)
+        if (textureID == gTextureIDList[i].ID)
+            return gTextureIDList[i];
+    return gTextureIDList[0];
 }
 
 //--------------------------------------------------------------------------
@@ -808,7 +910,7 @@ function selectImageNumberUpdate() {
 
 function downloadFile(text, name, type) {
     var a = document.createElement("a");
-    var file = new Blob([text], {type: type});
+    var file = new Blob([text], { type: type });
     a.href = URL.createObjectURL(file);
     a.download = name;
     a.click();
