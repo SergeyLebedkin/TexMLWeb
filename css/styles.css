@@ -58,6 +58,14 @@ html, body {
     border: 0px solid green;
 }
 
+.image-preview {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: auto;
+    min-height: 100px;
+    border: 0px solid green;
+}
+
 /* canvases */
 
 #center_panel {

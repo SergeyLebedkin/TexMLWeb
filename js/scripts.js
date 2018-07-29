@@ -497,6 +497,77 @@ class ImageInfoViewer {
     }
 }
 
+// ImageInfoListViewer
+class ImageInfoListViewer {
+    constructor(imageInfoList) {
+        this.imageInfoList = imageInfoList;
+        this.imageViewerContainer = document.getElementById("image_preview");
+    }
+
+    // clear
+    clear() {
+        // clear childs
+        while (this.imageViewerContainer.firstChild) {
+            this.imageViewerContainer.removeChild(
+                this.imageViewerContainer.firstChild
+            );
+        }
+    }
+
+    // redraw
+    redraw() {
+        this.clear();
+
+        // add all images to preview
+        for (var i = 0; i < this.imageInfoList.length; i++) {
+            // get image info
+            var imageInfo = this.imageInfoList[i];
+            this.appendImageItem(imageInfo)
+        }
+    }
+
+    // appendImageItem
+    appendImageItem(imageInfo) {
+        // add div
+        var div = document.createElement('div');
+        div.style.display = "flex";
+        div.style.flexDirection = "column";
+        div.style.color = "white";
+        div.style.padding = "5px";
+
+        // add label
+        var filaNameLabel = document.createElement('a');
+        filaNameLabel.innerText = imageInfo.fileRef.name;
+        filaNameLabel.style.fontSize = "16px";
+        div.appendChild(filaNameLabel);
+
+        // get ratio
+        var ratio = imageInfo.image.width / imageInfo.image.height;
+        var canvas_height = Math.min(imageInfo.image.height, 512);
+        var canvas_width = canvas_height * ratio;
+
+        // create div canvas
+        var divCanvas = document.createElement('div');
+
+        // create canvas
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas_width;
+        canvas.height = canvas_height;
+
+        // get context and draw original image
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(imageInfo.image,
+            0, 0, imageInfo.image.width, imageInfo.image.height,
+            0, 0, canvas.width, canvas.height
+        );
+        divCanvas.appendChild(canvas);
+        div.appendChild(divCanvas);
+
+        // append new canvas
+        this.imageViewerContainer.appendChild(div);
+    }
+}
+
 // ImageRegionViewer
 class ImageRegionViewer {
     constructor(imageInfoList) {
@@ -504,7 +575,7 @@ class ImageRegionViewer {
         this.textureID = null;
         this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
         this.source = RegionInfoSourceEnum.MANUAL;
-        
+
         // get controls
         this.regionListContainer = document.getElementById("region_preview");
     }
@@ -573,7 +644,6 @@ class ImageRegionViewer {
                 }
             }
         }
-        // TODO: JUST DRAW region list (as internal canvases)
     }
 
     // addRegionInfoItem
@@ -657,6 +727,7 @@ gTextureIDListView.update();
 var gImageInfoViewer = new ImageInfoViewer(image_canvas_panel);
 gImageInfoViewer.textureID = gTextureIDList[0];
 gImageInfoViewer.onchange = imageInfoChange;
+var gImageInfoListViewer = new ImageInfoListViewer(gImageInfoList);
 var gImageRegionListViewer = new ImageRegionViewer(gImageInfoList);
 imageInfoRegionsSelectorUpdate();
 
@@ -692,6 +763,24 @@ function regionSourceClick() {
     } else {
         gImageInfoViewer.setSource(RegionInfoSourceEnum.LOADED);
         gImageRegionListViewer.setSource(RegionInfoSourceEnum.LOADED);
+    }
+}
+
+// view mode click
+function viewModeClick() {
+    if (document.getElementById("rbEdit").checked) {
+        console.log("rbEdit");
+        image_preview.style.display = "none";
+        image_editor.style.display = "flex";
+        //gImageInfoViewer.setSource(RegionInfoSourceEnum.MANUAL);
+        //gImageRegionListViewer.setSource(RegionInfoSourceEnum.MANUAL);
+    } else {
+        console.log("rbView");
+        gImageInfoListViewer.redraw();
+        image_editor.style.display = "none";
+        image_preview.style.display = "flex";
+        //gImageInfoViewer.setSource(RegionInfoSourceEnum.LOADED);
+        //gImageRegionListViewer.setSource(RegionInfoSourceEnum.LOADED);
     }
 }
 

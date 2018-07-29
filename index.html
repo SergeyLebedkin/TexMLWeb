@@ -44,6 +44,14 @@
                     <input onclick="regionSourceClick()" type="radio" id="rbLoaded" name="regionSource" value="Loaded">
                     <label>Loaded</label>
                 </div>
+                <!-- View mode switcher -->
+                <div>
+                    <a>View mode:</a>
+                    <input onclick="viewModeClick()" type="radio" id="rbEdit" name="regionSource" value="Edit" checked>
+                    <label>Edit</label>
+                    <input onclick="viewModeClick()" type="radio" id="rbPreview" name="regionSource" value="Preview">
+                    <label>Preview</label>
+                </div>
             </div>
             <!-- 2b. Assign Visual Signature -->
             <div class="menu-item-title">2b. Assign Visual Signature</div>
@@ -67,7 +75,7 @@
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="submitClick()">Submit</button>
             </div>
-            <!-- Load  -->
+            <!-- Load regions -->
             <div class="menu-item-title">4. Load regions</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="loadRegionsClick()">Load regions</button>
@@ -75,22 +83,33 @@
             </div>
         </div>
         <div class="center-panel" id="center_panel">
-            <div style="flex-direction: row">
-                <button id="scaleDownBnt" onclick="scaleDownBntClick()">-</button>
-                <button id="scaleUpBtn" onclick="scaleUpBtnClick()">+</button>
-                <a id="scaleFactor">100%</a>
+            <div id="image_editor" class="center-panel">
+                <!-- -/+ scale buttons -->
+                <div style="flex-direction: row">
+                    <button id="scaleDownBnt" onclick="scaleDownBntClick()">-</button>
+                    <button id="scaleUpBtn" onclick="scaleUpBtnClick()">+</button>
+                    <a id="scaleFactor">100%</a>
+                </div>
+                <!-- editor -->
+                <div id="image_canvas_panel">
+                    <!-- content will be created programmaticaly -->
+                </div>
             </div>
-            <div id="image_canvas_panel">
+            <!-- preview -->
+            <div id="image_preview" class="image-preview">
+                <!-- content will be created programmaticaly -->
             </div>
         </div>
         <div class="right-panel">
             <select id="imageInfoRegionsSelector" onchange="imageInfoRegionsSelectorChange()">
             </select>
             <div id="region_preview">
+                <!-- content will be created programmaticaly -->
             </div>
         </div>
     </div>
     <div class="bottom-panel" id="bottom_panel">
+        <!-- LOG space. Now is empty. Content will be created programmaticaly -->
     </div>
     <!-- sripts-->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.1"> </script>
