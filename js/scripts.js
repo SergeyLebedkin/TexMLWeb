@@ -532,12 +532,13 @@ class ImageInfoListViewer {
         var div = document.createElement('div');
         div.style.display = "flex";
         div.style.flexDirection = "column";
-        div.style.color = "white";
         div.style.padding = "5px";
+        div.style.border = "1px solid gray"
 
         // add label
         var filaNameLabel = document.createElement('a');
         filaNameLabel.innerText = imageInfo.fileRef.name;
+        filaNameLabel.style.color = "white";
         filaNameLabel.style.fontSize = "16px";
         div.appendChild(filaNameLabel);
 
