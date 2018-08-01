@@ -29,28 +29,30 @@
 
                 </select>
                 <!-- Colormap switcher -->
-                <div>
-                    <a>Colormap:</a>
+                <div style="display: flex; flex-direction: row">
+                    <a style="width: 90px">Colormap:</a>
                     <input onclick="colorMapTypeClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale" checked>
-                    <label>Gray scale</label>
+                    <a style="width: 90px">Gray scale</a>
                     <input onclick="colorMapTypeClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
-                    <label>JIT</label>
+                    <a>JIT</a>
                 </div>
+                <hr>
                 <!-- Region source switcher -->
-                <div>
-                    <a>Regions:</a>
+                <div style="display: flex; flex-direction: row">
+                    <a style="width: 90px">Regions:</a>
                     <input onclick="regionSourceClick()" type="radio" id="rbManual" name="regionSource" value="Manual" checked>
-                    <label>Created</label>
+                    <a style="width: 90px">Created</a>
                     <input onclick="regionSourceClick()" type="radio" id="rbLoaded" name="regionSource" value="Loaded">
-                    <label>Loaded</label>
+                    <a>Loaded</a>
                 </div>
+                <hr>
                 <!-- View mode switcher -->
-                <div>
-                    <a>View mode:</a>
-                    <input onclick="viewModeClick()" type="radio" id="rbEdit" name="regionSource" value="Edit" checked>
-                    <label>Edit</label>
-                    <input onclick="viewModeClick()" type="radio" id="rbPreview" name="regionSource" value="Preview">
-                    <label>Preview</label>
+                <div style="display: flex; flex-direction: row">
+                    <a style="width: 90px">View mode:</a>
+                    <input onclick="viewModeClick()" type="radio" id="rbEdit" name="imagePreview" value="Edit" checked>
+                    <a style="width: 90px">Edit</a>
+                    <input onclick="viewModeClick()" type="radio" id="rbPreview" name="imagePreview" value="Preview">
+                    <a>Preview</a>
                 </div>
             </div>
             <!-- 2b. Assign Visual Signature -->

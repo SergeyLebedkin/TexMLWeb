@@ -191,7 +191,7 @@ class TextureIDListView {
             // create descr
             var descr = document.createElement("input");
             descr.type = "text";
-            descr.text = textureID.descr;
+            descr.value = textureID.name;
             descr.style.width = "100%";
             descr.textureID = textureID;
             descr.oninput = function (event) {
@@ -420,22 +420,8 @@ class ImageInfoViewer {
         ctx.drawImage(this.imageInfo.image, 0, 0);
 
         // calculate image buffer - JIT
-        if (this.colorMapType == ColorMapTypeEnum.JIT) {
-            // get image data
-            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-            // update image data
-            for (var i = 0; i < imageData.data.length; i += 4) {
-                var color = grayscaleToJit(imageData.data[i + 1]); // get green value
-                imageData.data[i + 0] = color.r * 255;
-                imageData.data[i + 1] = color.g * 255;
-                imageData.data[i + 2] = color.b * 255;
-                imageData.data[i + 3] = 255;
-            }
-
-            // update context
-            ctx.putImageData(imageData, 0, 0);
-        }
+        if (this.colorMapType == ColorMapTypeEnum.JIT)
+            convertCanvasToJit(canvas);
 
         // copy img
         this.imageBuffer.onload = function (event) { event.currentTarget.imageInfoViewer.redraw(); };
@@ -455,7 +441,7 @@ class ImageInfoViewer {
     // drawImageRegions
     drawImageRegions() {
         if (this.imageInfo !== null) {
-            console.log(this.imageInfo.regions.length);
+            // console.log(this.imageInfo.regions.length);
             for (var i = 0; i < this.imageInfo.regions.length; i++) {
                 var region = this.imageInfo.regions[i];
                 if (region.source === this.source) {
@@ -502,6 +488,7 @@ class ImageInfoListViewer {
     constructor(imageInfoList) {
         this.imageInfoList = imageInfoList;
         this.imageViewerContainer = document.getElementById("image_preview");
+        this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
     }
 
     // clear
@@ -561,11 +548,25 @@ class ImageInfoListViewer {
             0, 0, imageInfo.image.width, imageInfo.image.height,
             0, 0, canvas.width, canvas.height
         );
+
+        // calculate image buffer - JIT
+        if (this.colorMapType == ColorMapTypeEnum.JIT)
+            convertCanvasToJit(canvas);
+
         divCanvas.appendChild(canvas);
         div.appendChild(divCanvas);
 
         // append new canvas
         this.imageViewerContainer.appendChild(div);
+    }
+
+    // setColorMapType
+    // NOTE: This is async function
+    setColorMapType(colorMapType) {
+        if (this.colorMapType !== colorMapType) {
+            this.colorMapType = colorMapType;
+            this.redraw();
+        }
     }
 }
 
@@ -649,17 +650,32 @@ class ImageRegionViewer {
 
     // addRegionInfoItem
     appendRegionInfoItem(imageInfo, regionInfo) {
+        // add div
+        var div = document.createElement('div');
+        div.style.display = "flex";
+        div.style.flexDirection = "column";
+        div.style.padding = "5px";
+
+        // add label
+        var filaNameLabel = document.createElement('a');
+        filaNameLabel.innerText = imageInfo.fileRef.name;
+        filaNameLabel.style.fontSize = "16px";
+        div.appendChild(filaNameLabel);
+
         // get ratio
         var ratio = regionInfo.width / regionInfo.height;
-        var canvas_width = Math.min(regionInfo.width, 250);
+        var canvas_width = Math.min(regionInfo.width, 256);
         var canvas_height = canvas_width / ratio;
+
+        // create div canvas
+        var divCanvas = document.createElement('div');
+        divCanvas.width = canvas_width;
+        divCanvas.height = canvas_height;
+
         // create canvas
         var canvas = document.createElement('canvas');
         canvas.width = canvas_width;
         canvas.height = canvas_height;
-        canvas.style.maxWidth = canvas_width;
-        canvas.style.maxHeight = canvas_height;
-        canvas.style.padding = "5px";
 
         // get context and draw original image
         var ctx = canvas.getContext('2d');
@@ -671,36 +687,14 @@ class ImageRegionViewer {
         );
 
         // calculate image buffer - JIT
-        if (this.colorMapType == ColorMapTypeEnum.JIT) {
-            // get image data
-            var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        if (this.colorMapType == ColorMapTypeEnum.JIT)
+            convertCanvasToJit(canvas);
 
-            // update image data
-            for (var i = 0; i < imageData.data.length; i += 4) {
-                var color = grayscaleToJit(imageData.data[i + 1]); // get green value
-                imageData.data[i + 0] = color.r * 255;
-                imageData.data[i + 1] = color.g * 255;
-                imageData.data[i + 2] = color.b * 255;
-                imageData.data[i + 3] = 255;
-            }
-
-            // update context
-            ctx.putImageData(imageData, 0, 0);
-        }
-
-        // add label
-        var label = document.createElement('a');
-        label.innerText = imageInfo.fileRef.name;
-        this.regionListContainer.appendChild(label);
+        divCanvas.appendChild(canvas);
+        div.appendChild(divCanvas);
 
         // append new canvas
-        this.regionListContainer.appendChild(canvas);
-
-        // create break
-        this.regionListContainer.appendChild(
-            document.createElement('br')
-        );
-
+        this.regionListContainer.appendChild(div);
     }
 }
 
@@ -749,9 +743,11 @@ function setectionModeClick() {
 function colorMapTypeClick() {
     if (document.getElementById("rbGrayScale").checked) {
         gImageInfoViewer.setColorMapType(ColorMapTypeEnum.GRAY_SCALE);
+        gImageInfoListViewer.setColorMapType(ColorMapTypeEnum.GRAY_SCALE);
         gImageRegionListViewer.setColorMapType(ColorMapTypeEnum.GRAY_SCALE);
     } else {
         gImageInfoViewer.setColorMapType(ColorMapTypeEnum.JIT);
+        gImageInfoListViewer.setColorMapType(ColorMapTypeEnum.JIT);
         gImageRegionListViewer.setColorMapType(ColorMapTypeEnum.JIT);
     }
 }
@@ -770,13 +766,11 @@ function regionSourceClick() {
 // view mode click
 function viewModeClick() {
     if (document.getElementById("rbEdit").checked) {
-        console.log("rbEdit");
         image_preview.style.display = "none";
         image_editor.style.display = "flex";
         //gImageInfoViewer.setSource(RegionInfoSourceEnum.MANUAL);
         //gImageRegionListViewer.setSource(RegionInfoSourceEnum.MANUAL);
     } else {
-        console.log("rbView");
         gImageInfoListViewer.redraw();
         image_editor.style.display = "none";
         image_preview.style.display = "flex";
@@ -865,7 +859,7 @@ function submitClick(event) {
         var imageInfo = gImageInfoList[i];
         for (var j = 0; j < imageInfo.regions.length; j++) {
             var imageRegion = imageInfo.regions[j];
-            console.log(imageInfo.fileRef.mozFullPath);
+            // console.log(imageInfo.fileRef.mozFullPath);
             regionsString +=
                 imageInfo.fileRef.name + ", " +
                 imageRegion.x + ", " +
@@ -889,7 +883,7 @@ function loadRegionsClick(event) {
         invisible_text_file_input.accept = '.txt';
         invisible_text_file_input.onchange = function (event) {
             for (var i = 0; i < event.currentTarget.files.length; i++) {
-                parceRegionFile(event.currentTarget.files[i]);
+                parseRegionFile(event.currentTarget.files[i]);
             }
         }
         invisible_text_file_input.click();
@@ -897,7 +891,7 @@ function loadRegionsClick(event) {
 }
 
 // parce text file
-function parceRegionFile(f) {
+function parseRegionFile(f) {
     // parce text file
     var r = new FileReader();
     r.onload = function (e) {
@@ -905,6 +899,7 @@ function parceRegionFile(f) {
             str => parceRegionString(str)
         );
         gImageInfoViewer.redraw();
+        gImageInfoListViewer.redraw();
         gImageRegionListViewer.drawRegionList();
     }
     r.readAsText(f);
@@ -1014,6 +1009,25 @@ function grayscaleToJit(value) {
     result.g = clamp(1.5 - Math.abs(2.0 * t), 0, 1);
     result.b = clamp(1.5 - Math.abs(2.0 * t + 1.0), 0, 1);
     return result;
+}
+
+// convert canvas to Jit
+function convertCanvasToJit(canvas) {
+    // get image data
+    var ctx = canvas.getContext('2d');
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // update image data
+    for (var i = 0; i < imageData.data.length; i += 4) {
+        var color = grayscaleToJit(imageData.data[i + 1]); // get green value
+        imageData.data[i + 0] = color.r * 255;
+        imageData.data[i + 1] = color.g * 255;
+        imageData.data[i + 2] = color.b * 255;
+        imageData.data[i + 3] = 255;
+    }
+
+    // update context
+    ctx.putImageData(imageData, 0, 0);
 }
 
 // clamp, just clamp
