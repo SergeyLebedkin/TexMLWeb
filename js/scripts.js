@@ -281,7 +281,18 @@ class ImageInfoViewer {
                         regionInfo.width = imageInfoViewer.selectionRegionInfo.width;
                         regionInfo.height = imageInfoViewer.selectionRegionInfo.height;
                         regionInfo.trim(0, 0, imageInfoViewer.imageBuffer.width, imageInfoViewer.imageBuffer.height);
-                        imageInfoViewer.imageInfo.regions.push(regionInfo);
+
+                        // check size restrictions
+                        if ((regionInfo.width > 200) && (regionInfo.height > 200)) {
+                            imageInfoViewer.removeRegionsInArea(imageInfoViewer.selectionRegionInfo);
+                            imageInfoViewer.imageInfo.regions.push(regionInfo);
+                        }
+                        else {
+                            //var x = document.getElementById("myDialog");
+                            //x.showModal();
+                            window.alert("Region is too small");
+                            console.log("region is too small");
+                        }
                     }
                 } else if (imageInfoViewer.selectionMode === SelectionModeEnum.REMOVE) {
                     // remove regions from list
@@ -935,6 +946,11 @@ function findOrDefaultTextureID(textureID) {
         if (textureID == gTextureIDList[i].ID)
             return gTextureIDList[i];
     return gTextureIDList[0];
+}
+
+function closeModal(event)
+{
+    myDialog.close();
 }
 
 //--------------------------------------------------------------------------
