@@ -498,9 +498,17 @@ class ImageInfoViewer {
 class ImageInfoListViewer {
     constructor(imageInfoList) {
         this.imageInfoList = imageInfoList;
-        this.imageViewerContainer = document.getElementById("image_preview");
+        this.imageViewerContainer = document.getElementById("image_preview_canvas_panel");
+        this.scale = 1.0;
         this.colorMapType = ColorMapTypeEnum.GRAY_SCALE;
     }
+
+    // setScale
+    setScale(scale) {
+        this.scale = scale;
+        this.redraw();
+    }
+
 
     // clear
     clear() {
@@ -542,7 +550,7 @@ class ImageInfoListViewer {
 
         // get ratio
         var ratio = imageInfo.image.width / imageInfo.image.height;
-        var canvas_height = Math.min(imageInfo.image.height, 512);
+        var canvas_height = Math.min(imageInfo.image.height, 512) * this.scale;
         var canvas_width = canvas_height * ratio;
 
         // create div canvas
@@ -777,14 +785,14 @@ function regionSourceClick() {
 // view mode click
 function viewModeClick() {
     if (document.getElementById("rbEdit").checked) {
-        image_preview.style.display = "none";
         image_editor.style.display = "flex";
+        image_preview.style.display = "none";
         //gImageInfoViewer.setSource(RegionInfoSourceEnum.MANUAL);
         //gImageRegionListViewer.setSource(RegionInfoSourceEnum.MANUAL);
     } else {
         gImageInfoListViewer.redraw();
         image_editor.style.display = "none";
-        image_preview.style.display = "flex";
+        image_preview.style.display = "block";
         //gImageInfoViewer.setSource(RegionInfoSourceEnum.LOADED);
         //gImageRegionListViewer.setSource(RegionInfoSourceEnum.LOADED);
     }
@@ -833,6 +841,16 @@ function scaleDownBntClick(event) {
 function scaleUpBtnClick(event) {
     gImageInfoViewer.setScale(gImageInfoViewer.scale * 2);
     scaleFactor.innerText = Math.round(gImageInfoViewer.scale * 100) + "%";
+}
+
+// scale down preview bnt click
+function scaleDownPreviewBntClick(event) {
+    gImageInfoListViewer.setScale(gImageInfoListViewer.scale / 2);
+}
+
+// scale up preview bnt click
+function scaleUpPreviewBtnClick(event) {
+    gImageInfoListViewer.setScale(gImageInfoListViewer.scale * 2);
 }
 
 // // image number input change
@@ -948,8 +966,7 @@ function findOrDefaultTextureID(textureID) {
     return gTextureIDList[0];
 }
 
-function closeModal(event)
-{
+function closeModal(event) {
     myDialog.close();
 }
 

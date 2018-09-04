@@ -85,6 +85,7 @@
             </div>
         </div>
         <div class="center-panel" id="center_panel">
+            <!-- editor -->
             <div id="image_editor" class="center-panel">
                 <!-- -/+ scale buttons -->
                 <div style="flex-direction: row">
@@ -99,7 +100,15 @@
             </div>
             <!-- preview -->
             <div id="image_preview" class="image-preview">
-                <!-- content will be created programmaticaly -->
+                <!-- -/+ scale buttons -->
+                <div style="flex-direction: row">
+                    <button id="scaleDownPreviewBnt" onclick="scaleDownPreviewBntClick()">-</button>
+                    <button id="scaleUpPreviewBtn" onclick="scaleUpPreviewBtnClick()">+</button>
+                </div>
+                <!-- preview -->
+                <div id="image_preview_canvas_panel">
+                    <!-- content will be created programmaticaly -->
+                </div>
             </div>
         </div>
         <div class="right-panel">
