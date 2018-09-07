@@ -966,10 +966,6 @@ function findOrDefaultTextureID(textureID) {
     return gTextureIDList[0];
 }
 
-function closeModal(event) {
-    myDialog.close();
-}
-
 //--------------------------------------------------------------------------
 // utils
 //--------------------------------------------------------------------------
