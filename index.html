@@ -81,6 +81,8 @@
             <div class="menu-item-title">4. Load regions</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="loadRegionsClick()">Load regions</button>
+                <hr>
+                <button class="load-images-btn" onclick="loadCurvesClick()">Load curves</button>
                 <input type="file" id="invisible_text_file_input" name="files[]" style="display:none">
             </div>
         </div>
@@ -94,7 +96,7 @@
                     <a id="scaleFactor">100%</a>
                 </div>
                 <!-- editor -->
-                <div id="image_canvas_panel">
+                <div id="image_canvas_panel" style="flex-direction: row">
                     <!-- content will be created programmaticaly -->
                 </div>
             </div>
@@ -123,7 +125,6 @@
         <!-- LOG space. Now is empty. Content will be created programmaticaly -->
     </div>
     <!-- scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.1"> </script>
     <script type="text/javascript" src="js/scripts.js"></script>
 </body>
 

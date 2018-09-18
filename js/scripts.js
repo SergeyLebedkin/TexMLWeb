@@ -91,12 +91,29 @@ class RegionInfo {
     }
 }
 
+// CurvePoint
+class CurvePoint {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+}
+
+// Curve
+class Curve {
+    constructor() {
+        this.color = "#ff0000";
+        this.points = []; // CurvePoint
+    }
+}
+
 // ImageInfo
 class ImageInfo {
     constructor() {
         this.fileRef = null;
         this.image = null;
         this.regions = [];
+        this.curves = [];
     }
 
     // load from file
@@ -232,12 +249,20 @@ class ImageInfoViewer {
         this.onchange = null;
         this.textureID = null;
 
-        // create controls
+        // create image canvas
         this.parent = parent;
         this.imageCanvas = document.createElement("canvas");
         this.imageCanvas.style.border = "1px solid orange";
         this.imageCanvasCtx = this.imageCanvas.getContext('2d');
         this.parent.appendChild(this.imageCanvas);
+
+        // create curves canvas
+        this.curvesCanvas = document.createElement("canvas");
+        this.curvesCanvas.style.display = "none";
+        this.curvesCanvas.style.border = "1px solid gray";
+        this.curvesCanvasCtx = this.curvesCanvas.getContext('2d');
+        this.parent.appendChild(this.curvesCanvas);
+
         this.parent.imageInfoViewer = this;
 
         // add event - mousemove
@@ -313,8 +338,9 @@ class ImageInfoViewer {
             // get base data
             var imageInfoViewer = event.currentTarget.imageInfoViewer;
 
-            // set selection state and setup selection region
-            if (imageInfoViewer.imageInfo !== null) {
+            // set selection state and setup selection region if preview mod is MANUAL
+            if ((imageInfoViewer.source === RegionInfoSourceEnum.MANUAL) && 
+                (imageInfoViewer.imageInfo !== null)) {
                 var mouseCoords = getMousePosByElement(imageInfoViewer.imageCanvas, event);
                 imageInfoViewer.selectionStarted = true;
                 // check selection mode and set color
@@ -347,9 +373,11 @@ class ImageInfoViewer {
         // this is temporary solution. There will be previews
         for (var i = this.imageInfo.regions.length - 1; i >= 0; i--) {
             var region = this.imageInfo.regions[i];
-            var intersected = region.checkIntersectionRegion(this.selectionRegionInfo);
-            if (intersected) {
-                this.imageInfo.regions.splice(i, 1);
+            if (region.source === RegionInfoSourceEnum.MANUAL) {
+                var intersected = region.checkIntersectionRegion(this.selectionRegionInfo);
+                if (intersected) {
+                    this.imageInfo.regions.splice(i, 1);
+                }
             }
         }
     }
@@ -389,13 +417,14 @@ class ImageInfoViewer {
         }
     }
 
+    // setSelectionMode
     setSelectionMode(selectionMode) {
         if (this.selectionMode !== selectionMode) {
             this.selectionMode = selectionMode;
         }
     }
 
-    // set scale
+    // setScale
     setScale(scale) {
         if (this.scale !== scale) {
             this.scale = scale;
@@ -405,16 +434,19 @@ class ImageInfoViewer {
         }
     }
 
-    // setColorMapType
-    // NOTE: This is async function
+    // setSource
     setSource(source) {
         if (this.source !== source) {
             this.source = source;
+            if (this.source === RegionInfoSourceEnum.MANUAL)
+                this.curvesCanvas.style.display = "none";
+            if (this.source === RegionInfoSourceEnum.LOADED)
+                this.curvesCanvas.style.display = "inline";
             this.updateImageBuffer();
         }
     }
 
-    // updateImageCache
+    // updateImageBuffer
     // NOTE: This is async function
     updateImageBuffer() {
         // check for null
@@ -465,7 +497,7 @@ class ImageInfoViewer {
         }
     }
 
-    // drawImageRegions
+    // drawSelectionRegion
     drawSelectionRegion() {
         if (this.selectionStarted) {
             // check selection mode and set alpha
@@ -480,10 +512,38 @@ class ImageInfoViewer {
         }
     }
 
-    // update
+    // drawCurves
+    drawCurves() {
+        if (this.imageInfo !== null) {
+            // set curves parameters
+            this.curvesCanvas.width = this.imageBuffer.width * this.scale;
+            this.curvesCanvas.height = this.imageBuffer.height * this.scale;
+            this.curvesCanvasCtx.clearRect(0, 0, this.curvesCanvas.width, this.curvesCanvas.height);
+
+            // draw curves
+            for (var i = 0; i < this.imageInfo.curves.length; i++) {
+                this.curvesCanvasCtx.beginPath();
+                var x = this.imageInfo.curves[i].points[0].y * this.curvesCanvas.width;
+                var y = this.imageInfo.curves[i].points[0].x * this.scale;
+                this.curvesCanvasCtx.moveTo(x, y);
+                // move by points
+                for (var j = 1; j < this.imageInfo.curves[i].points.length; j++) {
+                    var x = this.imageInfo.curves[i].points[j].y * this.curvesCanvas.width;
+                    var y = this.imageInfo.curves[i].points[j].x * this.scale;
+                    this.curvesCanvasCtx.lineTo(x, y);
+                }
+                this.curvesCanvasCtx.lineWidth = 3;
+                this.curvesCanvasCtx.strokeStyle = this.imageInfo.curves[i].color;
+                this.curvesCanvasCtx.stroke();
+            }
+        }
+    }
+
+    // redraw
     redraw() {
         this.drawImageBuffer();
         this.drawImageRegions();
+        this.drawCurves();
     }
 
     // clear
@@ -911,8 +971,23 @@ function loadRegionsClick(event) {
     if (invisible_text_file_input) {
         invisible_text_file_input.accept = '.txt';
         invisible_text_file_input.onchange = function (event) {
+            clearLoadedRegions();
             for (var i = 0; i < event.currentTarget.files.length; i++) {
                 parseRegionFile(event.currentTarget.files[i]);
+            }
+        }
+        invisible_text_file_input.click();
+    }
+}
+
+// load curves click
+function loadCurvesClick(event) {
+    if (invisible_text_file_input) {
+        invisible_text_file_input.accept = '.txt';
+        invisible_text_file_input.onchange = function (event) {
+            clearLoadedCurves();
+            for (var i = 0; i < event.currentTarget.files.length; i++) {
+                parseCurveFile(event.currentTarget.files[i]);
             }
         }
         invisible_text_file_input.click();
@@ -959,6 +1034,66 @@ function parceRegionString(s) {
     });
 }
 
+// clearLoadedRegions
+function clearLoadedRegions() {
+    gImageInfoList.forEach(imageInfo => {
+        for (var i = imageInfo.regions.length-1; i >= 0; --i)
+            if (imageInfo.regions[i].source === RegionInfoSourceEnum.LOADED)
+                imageInfo.regions.splice(i,1);
+    })
+}
+
+// parseCurveFile
+function parseCurveFile(f) {
+    // parce text file
+    var r = new FileReader();
+    r.onload = function (e) {
+        var strings = e.target.result.split('\n').forEach(
+            str => parseCurveString(str)
+        );
+        gImageInfoViewer.redraw();
+        gImageInfoListViewer.redraw();
+        gImageRegionListViewer.drawRegionList();
+    }
+    r.readAsText(f);
+}
+
+// parce region string
+function parseCurveString(s) {
+    // chech for empty string
+    if (s.length === 0) return;
+    var params = s.split(',');
+    params = params.map(param => param.trim());
+    var curvesCount = params.length - 3;
+
+    // add region to image info
+    gImageInfoList.forEach(imageInfo => {
+        if (imageInfo.fileRef.name === params[0]) {
+            // create curves for ImageInfo
+            for (var i = imageInfo.curves.length; i < curvesCount; i++) {
+                var curve = new Curve();
+                curve.color = cColorTable[i];
+                imageInfo.curves.push(curve);
+            }
+
+            // add points to curves
+            for (var i = 0; i < curvesCount; i++) {
+                var x = params[1];
+                var y = params[3 + i];
+                imageInfo.curves[i].points.push(new CurvePoint(x, y));
+            }
+        }
+    });
+}
+
+// clearLoadedCurves
+function clearLoadedCurves() {
+    gImageInfoList.forEach(imageInfo => {
+        imageInfo.curves = [];
+    })
+}
+
+// findOrDefaultTextureID
 function findOrDefaultTextureID(textureID) {
     for (var i = 0; i < gTextureIDList.length; i++)
         if (textureID == gTextureIDList[i].ID)
