@@ -91,7 +91,12 @@ html, body {
 
 /* decorations */
 
-#imageNumberInput {
+#selectPredictType {
+    width: 100%;
+    font-size: 20px;
+}
+
+#selectImageNumber {
     width: 100%;
     font-size: 20px;
 }
@@ -130,7 +135,7 @@ html, body {
 }
 
 #texture_id_list_container {
-    height: 200px;
+    height: 100px;
     overflow: auto;
 }
 
@@ -158,10 +163,58 @@ html, body {
     width: 100%;
 }
 
+.batch-btn {
+    display: block;
+    font-size: 16px;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 16px 16px;
+    margin: 4px 4px;
+    background-color: #333333;
+    border-radius: 5px;
+    width: 100%;
+}
+
 .load-images-btn:hover {
     background-color: #ff0000;
 }
 
 .load-images-btn:active {
     background-color: #ff2222;
+}
+
+.batch-btn:hover {
+    background-color: #ff0000;
+}
+
+.batch-btn:active {
+    background-color: #ff2222;
+}
+
+/* Style the tab */
+.tabs {
+    overflow: hidden;
+    background-color: #333333;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tabs button {
+    float: left;
+    font-size: 16px;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 16px 16px;
+    background-color: #333333;
+}
+
+/* Change background color of buttons on hover */
+.tabs button:hover {
+    background-color: #ff0000;
+}
+
+/* Create an active/current tablink class */
+.tabs button.active {
+    background-color: #ff0000;
 }

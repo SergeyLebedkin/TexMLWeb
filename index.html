@@ -9,17 +9,110 @@
 
 <body>
     <div class="top-panel">
-        <!-- Empty  -->
+        <!-- Tab links -->
+        <div class="tabs">
+            <button class="tablinks" onclick="imagesViewClick()">Images</button>
+            <!--<button class="tablinks" onclick="embeddingViewClick()">Embedding</button>-->
+            <button class="tablinks" onclick="trainAndPredictViewClick()">Train and Predict</button>
+        </div>
     </div>
-    <div class="main-panel">
+    <!-- trainAndPredict view -->
+    <div class="main-panel" id="trainAndPredict_view" style="display: none;">
         <div class="left-panel">
-            <!-- 1. Open files  -->
+            <!-- Load Train -->
+            <div class="menu-item-title">1. Load Train</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="loadTrainInfoBtnClick()">Load Train</button>
+                <input type="file" id="invisible_train_info_file_input" multiple name="files[]" style="display:none">
+                <hr>
+                <button class="load-images-btn" onclick="loadTrainImageBtnClick()">Load Images</button>
+                <input type="file" id="invisible_train_images_input" multiple name="files[]" style="display:none">
+                <input type="checkbox" id="checkboxTrainVisible" checked onchange="checkboxTrainVisibleOnChange()">
+                <label for="checkboxTrainVisible">Visible</label>
+            </div>
+            <!-- Load Predict -->
+            <div class="menu-item-title">2. Load Predict</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="loadPredictInfoBtnClick()">Load Predict</button>
+                <input type="file" id="invisible_predict_info_file_input" multiple name="files[]" style="display:none">
+                <hr>
+                <button class="load-images-btn" onclick="loadPredictImageBtnClick()">Load Images</button>
+                <input type="file" id="invisible_predict_images_input" multiple name="files[]" style="display:none">
+                <div style="display: flex; flex-direction: row">
+                    <button class="batch-btn" onclick="prevBatchPredictBtnClick()">Prev batch</button>
+                    <button class="batch-btn" onclick="nextBatchPredictBtnClick()">Next batch</button>
+                </div>
+                <hr>
+                <div style="display: flex; flex-direction: row">
+                    <div class="menu-item-title">Result ID: </div>
+                    <div class="menu-item-title" id="resultIDPredict">0</div>
+                </div>
+                <input type="range" id="sourceIndexPredictTb" oninput="onChangeSourceIndexPredictTb()" min="0" max="0" style="width:100%"/>
+                <hr>
+                <input type="checkbox" id="checkboxPredictVisible" checked onchange="checkboxPredictVisibleOnChange()">
+                <label for="checkboxPredictVisible">Visible</label>
+                <hr>
+                <div style="display: flex; flex-direction: row">
+                    <div class="menu-item-title">Scale: </div>
+                    <input type="range" id="trainAndPredictScale" oninput="onChangeTrainAndPredictScaleTb()" min="10" max="100" value="40" style="width:100%"/>
+                </div>
+                <hr>
+                <input type="checkbox" id="checkboxPredictEditable" checked>
+                <label for="checkboxPredictEditable">Editable</label>
+                <select id="selectPredictType"></select>
+            </div>
+            <!-- Save Embedded -->
+            <div class="menu-item-title">3. Save Embedded</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="savePredictInfoBtnClick()">Save Embedded</button>
+            </div>
+        </div>
+        <div class="center-panel" id="trainAndPredictRenderArea" onresize="updateTrainAndPredictRenderArea()"></div>
+    </div>
+    <!-- embedding view -->
+    <div class="main-panel" id="embedding_view" style="display: none;">
+        <div class="left-panel">
+            <!-- Load Embeddings -->
+            <div class="menu-item-title">1. Load Embeddings</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="loadEmbeddedInfoBtnClick()">Load Embeddings</button>
+                <input type="file" id="invisible_embedded_info_file_input" name="files[]" style="display:none">
+            </div>
+            <!-- Load Images -->
+            <div class="menu-item-title">2. Open files</div>
+            <div class="bordered-panel">
+                <button class="load-images-btn" onclick="loadEmbeddedImageBtnClick()">Load Images</button>
+                <input type="file" id="invisible_embedded_image_input" multiple name="files[]" style="display:none">
+            </div>
+        </div>
+        <div class="center-panel" id="embeddedRenderArea" onresize="updateEmbeddedRenderArea()"></div>
+    </div>
+    <!-- image view -->
+    <div class="main-panel" id="image_view">
+        <div class="left-panel">
+            <!-- Connection  -->
+            <div class="menu-item-title">Connection</div>
+            <div class="bordered-panel">
+                <div style="display: flex; flex-direction: row">
+                    <label style="width: 90px">Username:</label>
+                    <input id="inputUsername" type="text" style="width: 180px" />
+                </div>
+                <div style="display: flex; flex-direction: row">
+                    <label style="width: 90px">Session ID:</label>
+                    <input id="inputSessionID" type="text" style="width: 180px" readonly/>
+                </div>
+                <div style="display: flex; flex-direction: row">
+                    <label style="width: 90px">Description:</label>
+                    <input id="inputDescription" type="text" style="width: 180px" />
+                </div>
+            </div>
+            <!-- 1. Open files -->
             <div class="menu-item-title">1. Open files</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="loadImageBtnClick()">Load Images</button>
                 <input type="file" id="invisible_file_input" multiple name="files[]" style="display:none">
             </div>
-            <!-- 2a. Image view  -->
+            <!-- 2a. Image view -->
             <div class="menu-item-title">2a. Image view</div>
             <div class="bordered-panel">
                 <!-- Image Number -->
@@ -31,7 +124,8 @@
                 <!-- Colormap switcher -->
                 <div style="display: flex; flex-direction: row">
                     <a style="width: 90px">Colormap:</a>
-                    <input onclick="colorMapTypeClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale" checked>
+                    <input onclick="colorMapTypeClick()" type="radio" id="rbGrayScale" name="ColorMap" value="GrayScale"
+                        checked>
                     <a style="width: 90px">Gray scale</a>
                     <input onclick="colorMapTypeClick()" type="radio" id="rbColorMpaJit" name="ColorMap" value="Jit">
                     <a>JIT</a>
@@ -40,7 +134,8 @@
                 <!-- Region source switcher -->
                 <div style="display: flex; flex-direction: row">
                     <a style="width: 90px">Regions:</a>
-                    <input onclick="regionSourceClick()" type="radio" id="rbManual" name="regionSource" value="Manual" checked>
+                    <input onclick="regionSourceClick()" type="radio" id="rbManual" name="regionSource" value="Manual"
+                        checked>
                     <a style="width: 90px">Created</a>
                     <input onclick="regionSourceClick()" type="radio" id="rbLoaded" name="regionSource" value="Loaded">
                     <a>Loaded</a>
@@ -60,9 +155,11 @@
             <div class="bordered-panel">
                 <!-- Selection mode switcher -->
                 <a>Selection mode:</a>
-                <input onclick="setectionModeClick()" type="radio" id="rbSetectionModeAdd" name="SetectionMode" value="Add" checked>
+                <input onclick="setectionModeClick()" type="radio" id="rbSetectionModeAdd" name="SetectionMode" value="Add"
+                    checked>
                 <label>Add</label>
-                <input onclick="setectionModeClick()" type="radio" id="rbSetectionModeRemove" name="SetectionMode" value="Rmove">
+                <input onclick="setectionModeClick()" type="radio" id="rbSetectionModeRemove" name="SetectionMode"
+                    value="Rmove">
                 <label>Remove</label>
                 <hr>
                 <!-- TextureID list selector -->
@@ -72,7 +169,7 @@
                 <!-- add new TextureID -->
                 <button id="addTextureIDButton" onclick="addTextureIDButtonClick()">+</button>
             </div>
-            <!-- Submit  -->
+            <!-- Submit -->
             <div class="menu-item-title">3. Submit</div>
             <div class="bordered-panel">
                 <button class="load-images-btn" onclick="submitClick()">Submit</button>
@@ -85,6 +182,11 @@
                 <button class="load-images-btn" onclick="loadCurvesClick()">Load curves</button>
                 <input type="file" id="invisible_text_file_input" name="files[]" style="display:none">
             </div>
+            <div style="display: flex; flex-direction: row">
+                <div class="menu-item-title">Result ID: </div>
+                <div class="menu-item-title" id="resultID">0</div>
+            </div>
+            <input type="range" id="sourceIndexTb" oninput="onChangeSourceIndexTb()" min="0" max="0" style="width:100%"/>
         </div>
         <div class="center-panel" id="center_panel">
             <!-- editor -->
@@ -125,7 +227,12 @@
         <!-- LOG space. Now is empty. Content will be created programmaticaly -->
     </div>
     <!-- scripts -->
-    <script type="text/javascript" src="js/scripts.js"></script>
+    <script type="text/javascript" src="js/three.min.js"></script>
+    <script type="text/javascript" src="js/stats.min.js"></script>
+    <script type="text/javascript" src="js/OrbitControls.js"></script>
+    <script type="text/javascript" src="js/images.js"></script>
+    <script type="text/javascript" src="js/embedding.js"></script>
+    <script type="text/javascript" src="js/trainAndPredict.js"></script>
 </body>
 
 </html>
